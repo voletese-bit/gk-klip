@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Greenkeeper Klip</title>
+<meta name="theme-color" content="#0f1a13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GK Klip">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#0f1a13;--panel:#16241b;--card:#1c2e22;--line:#2a4332;--text:#eef2ea;--muted:#93a597;
+  --lime:#b5cc8e;--sand:#e2c98a;--ice:#93bedb;--rose:#e0998a;--accent:#b5cc8e;
+  --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column}
+header{padding:calc(12px + var(--safe-t)) 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;letter-spacing:.14em;margin:0;font-weight:700;text-transform:uppercase}
+header .wallet{font-weight:700;color:var(--sand);font-variant-numeric:tabular-nums}
+main{flex:1;overflow-y:auto;padding:14px 16px calc(90px + var(--safe-b))}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);border-top:1px solid var(--line);padding-bottom:var(--safe-b);z-index:5}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:10px 0 12px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+nav button.on{color:var(--lime)}
+nav button svg{display:block;margin:0 auto 3px;width:22px;height:22px}
+h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;font-weight:700}
+h2:first-child{margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.t{font-weight:700}
+.s{color:var(--muted);font-size:13px}
+.pay{font-weight:800;color:var(--sand);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:2px 7px;margin-right:6px}
+.k0{background:#2d4a2a;color:#cfe6a8}.k1{background:#2c3f24;color:var(--lime)}.k2{background:#3a3a22;color:var(--sand)}
+.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;background:var(--lime);color:#0d1410;letter-spacing:.03em}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.small{padding:7px 11px;font-size:13px}
+.btn:disabled{opacity:.45}
+.btn.wide{width:100%;padding:13px}
+input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0b140e;color:var(--text);font:inherit}
+.empty{color:var(--muted);text-align:center;padding:26px 10px}
+.msg{position:fixed;left:16px;right:16px;bottom:calc(84px + var(--safe-b));background:#26392c;border:1px solid var(--line);border-radius:12px;padding:12px 14px;z-index:20;display:none;font-weight:600}
+.big{font-size:30px;font-weight:300;letter-spacing:.02em}
+.stat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.stat div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat b{display:block;font-size:18px}
+.code{font-size:34px;letter-spacing:.2em;font-weight:800;color:var(--lime);text-align:center;padding:8px 0}
+/* Klippeskærmen */
+#mow{position:fixed;inset:0;background:#0a120d;z-index:30;display:none;touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%}
+#hud{position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--safe-t)) 12px 10px;display:flex;gap:10px;align-items:center;background:linear-gradient(#0a120dcc,#0a120d00)}
+#hud .bar{flex:1;height:10px;border-radius:6px;background:#ffffff1f;overflow:hidden}
+#hud .bar i{display:block;height:100%;background:var(--lime);width:0}
+#hud .pct{font-weight:800;min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
+#mowbtns{position:absolute;right:12px;bottom:calc(16px + var(--safe-b));display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+#mowbtns .btn{box-shadow:0 2px 10px #0008}
+#zoom{display:flex;gap:6px}
+#zoom .btn{width:44px;padding:9px 0;text-align:center}
+#stick{position:absolute;left:22px;bottom:calc(26px + var(--safe-b));width:150px;height:150px;border-radius:50%;background:#ffffff14;border:1px solid #ffffff2a}
+#knob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:#eef2eacc}
+#mowinfo{position:absolute;left:12px;right:12px;top:calc(46px + var(--safe-t));font-size:12px;color:#dfe8da;text-shadow:0 1px 3px #000}
+#mini{position:absolute;right:12px;top:calc(64px + var(--safe-t));border:1px solid #ffffff40;border-radius:6px;background:#0008;image-rendering:pixelated}
+.hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+</style>
+</head>
+<body>
+<header><h1>Greenkeeper Klip</h1><span class="wallet" id="wallet">–</span></header>
+<main id="main"></main>
+<nav id="nav">
+  <button data-tab="wall" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/></svg>Væggen</button>
+  <button data-tab="garage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20V9l9-5 9 5v11"/><path d="M7 20v-6h10v6"/></svg>Garage</button>
+  <button data-tab="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Mig</button>
+</nav>
+<div class="msg" id="msg"></div>
+
+<div id="mow">
+  <canvas id="cv"></canvas>
+  <div id="hud"><button class="btn small ghost" id="mowBack" style="background:#0a120d99">‹</button><div class="bar"><i id="bar"></i></div><span class="pct" id="pct">0 %</span></div>
+  <div id="mowinfo"></div>
+  <canvas id="mini"></canvas>
+  <div id="stick"><div id="knob"></div></div>
+  <div id="mowbtns">
+    <div id="zoom"><button class="btn ghost" id="zOut" style="background:#0a120d99">−</button><button class="btn ghost" id="zIn" style="background:#0a120d99">+</button></div>
+    <button class="btn" id="mowDone">Aflever</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+const API = "https://wvrtaeefmjgyvxmumrgc.supabase.co/functions/v1/gk-api";
+const KIND = ["Greens", "Fairways", "Rough"];
+// Klipperne: bredde (m) og fart (m/s). Låneklipperen fra klubben er smallere og langsommere.
+const OWN = { 0: { w: 0.56, v: 1.7 }, 1: { w: 2.5, v: 3.3 }, 2: { w: 3.4, v: 3.6 } };
+const LOAN = { 0: { w: 0.46, v: 1.15 }, 1: { w: 1.8, v: 2.2 }, 2: { w: 2.2, v: 2.4 } };
+const ZOOM = { 0: 34, 1: 15, 2: 11 };   // pixels pr. meter
+
+// ---------- lager (pr. telefon) ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("gk_" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("gk_" + k, JSON.stringify(v)); } catch {} },
+};
+function rnd(n) { const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, (x) => x.toString(16).padStart(2, "0")).join(""); }
+let id = store.get("id", null);
+if (!id) { const h = rnd(16); id = { device: `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`, secret: rnd(32), name: "" }; store.set("id", id); }
+
+async function api(action, body = {}) {
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, device: id.device, secret: id.secret, app: true, ...body }) });
+  let j; try { j = await r.json(); } catch { throw new Error("Serveren svarede ikke"); }
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+const kr = (v) => Math.round(v).toLocaleString("da-DK") + " kr";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let msgT = 0;
+function say(t) { const m = document.getElementById("msg"); m.textContent = t; m.style.display = "block"; clearTimeout(msgT); msgT = setTimeout(() => (m.style.display = "none"), 3800); }
+
+let me = null;
+async function loadMe() {
+  try { me = await api("me"); document.getElementById("wallet").textContent = kr(me.wallet); } catch (e) { say(e.message); }
+  return me;
+}
+
+// ---------- faner ----------
+const main = document.getElementById("main");
+let tab = "wall";
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b)); render(); });
+function render() { ({ wall: renderWall, garage: renderGarage, me: renderMe })[tab](); }
+
+async function renderWall() {
+  main.innerHTML = `<div class="empty">Henter væggen …</div>`;
+  let wall = [];
+  try { [wall] = await Promise.all([api("job_wall").then((j) => j.jobs), loadMe()]); } catch (e) { main.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  let h = "";
+  if (me && me.current) {
+    const c = me.current;
+    h += `<h2>Din opgave</h2><div class="card"><div class="row"><div class="grow"><span class="tag k${c.kind}">${KIND[c.kind]}</span><span class="t">${esc(c.title)}</span><div class="s">${esc(c.poster_name)} · ${Math.round(c.area_m2)} m²</div></div><span class="pay">${kr(c.pay)}</span></div>
+      <div class="row" style="margin-top:10px"><button class="btn" data-go="${c.id}">Fortsæt klipningen</button><button class="btn ghost small" data-drop="${c.id}">Opgiv</button></div></div>`;
+  }
+  h += `<h2>Den internationale væg</h2>`;
+  const open = wall.filter((j) => !j.mine);
+  if (!open.length) h += `<div class="card empty">Ingen klippeopgaver lige nu. Kig igen om lidt – eller tag en øveopgave fra klubben herunder.</div>`;
+  for (const j of open) {
+    h += `<div class="card"><div class="row"><div class="grow"><span class="tag k${j.kind}">${KIND[j.kind]}</span><span class="t">${esc(j.title)}</span>
+      <div class="s">${esc(j.poster_name)} · ${Math.round(j.area_m2).toLocaleString("da-DK")} m² · ${mowerFor(j.kind).own ? "din egen klipper" : "låneklipper (klubben tager 30 %)"}</div></div>
+      <div style="text-align:right"><div class="pay">${kr(j.pay)}</div><button class="btn small" data-take="${j.id}" style="margin-top:6px" ${me && me.current ? "disabled" : ""}>Tag den</button></div></div></div>`;
+  }
+  const mine = wall.filter((j) => j.mine);
+  if (mine.length) h += `<p class="hint">${mine.length} af opgaverne på væggen er dine egne fra spillet.</p>`;
+  h += `<h2>Klubbens øvebane</h2><div class="card"><div class="s" style="margin-bottom:8px">Lær klipperen at kende. Klubben betaler lidt lommepenge (op til 250 kr, 8 gange om dagen).</div>
+    <div class="row">${[0, 1, 2].map((k) => `<button class="btn ghost small" data-prac="${k}">${KIND[k]}</button>`).join("")}</div></div>`;
+  main.innerHTML = h;
+  main.querySelectorAll("[data-take]").forEach((b) => b.onclick = () => takeJob(b.dataset.take));
+  main.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => takeJob(b.dataset.go));
+  main.querySelectorAll("[data-drop]").forEach((b) => b.onclick = async () => { if (!confirm("Opgive opgaven? Den kommer tilbage på væggen.")) return; try { await api("job_drop", { id: b.dataset.drop }); store.set("prog_" + b.dataset.drop, null); render(); } catch (e) { say(e.message); } });
+  main.querySelectorAll("[data-prac]").forEach((b) => b.onclick = () => startPractice(+b.dataset.prac));
+}
+
+function mowerFor(kind) {
+  const own = me && me.mowers ? me.mowers.find((m) => m.kind === kind) : null;
+  return own ? { own: true, id: own.id, name: own.name, ...OWN[kind] } : { own: false, id: "laan", name: "Klubbens låneklipper", ...LOAN[kind] };
+}
+
+async function renderGarage() {
+  main.innerHTML = `<div class="empty">Henter garagen …</div>`;
+  await loadMe(); if (!me) return;
+  let h = `<h2>Dine klippere</h2>`;
+  h += `<div class="card"><div class="row"><div class="grow"><div class="t">Klubbens låneklipper</div><div class="s">Gratis at låne til alle slags opgaver – men smallere og langsommere, og klubben tager 30 % af betalingen.</div></div></div></div>`;
+  for (const m of me.mowers) {
+    h += `<div class="card"><div class="row"><div class="grow"><span class="tag k${m.kind}">${KIND[m.kind]}</span><span class="t">${esc(m.name)}</span>
+      <div class="s">${m.source === "gave" ? "Gave fra " + esc(m.given_by) + " for godt arbejde" : "Købt for dine egne penge"} · ${OWN[m.kind].w} m klippebredde</div></div></div></div>`;
+  }
+  h += `<h2>Køb en klipper</h2>`;
+  for (const s of me.shop) {
+    const has = me.mowers.some((m) => m.model === s.model);
+    h += `<div class="card"><div class="row"><div class="grow"><span class="tag k${s.kind}">${KIND[s.kind]}</span><span class="t">${esc(s.name)}</span>
+      <div class="s">${OWN[s.kind].w} m bredde · ${OWN[s.kind].v} m/s · hele betalingen til dig</div></div>
+      <div style="text-align:right"><div class="pay">${kr(s.price)}</div><button class="btn small" data-buy="${s.model}" style="margin-top:6px" ${has || me.wallet < s.price ? "disabled" : ""}>${has ? "Har den" : "Køb"}</button></div></div></div>`;
+  }
+  main.innerHTML = h;
+  main.querySelectorAll("[data-buy]").forEach((b) => b.onclick = async () => {
+    const s = me.shop.find((x) => x.model === +b.dataset.buy);
+    if (!confirm(`Køb ${s.name} for ${kr(s.price)}?`)) return;
+    try { await api("mower_buy", { model: s.model }); say(`${s.name} står nu i din garage`); renderGarage(); } catch (e) { say(e.message); }
+  });
+}
+
+async function renderMe() {
+  main.innerHTML = `<div class="empty">Henter …</div>`;
+  await loadMe(); if (!me) return;
+  main.innerHTML = `<h2>Mig</h2>
+    <div class="card"><div class="s">Dit navn på væggen</div><div class="row" style="margin-top:6px"><input id="nm" value="${esc(me.name)}" maxlength="32"><button class="btn small" id="nmSave">Gem</button></div></div>
+    <div class="stat"><div><span class="s">Konto</span><b>${kr(me.wallet)}</b></div><div><span class="s">Opgaver</span><b>${me.jobs_done}</b></div><div><span class="s">Klippet</span><b>${Math.round(me.m2_cut).toLocaleString("da-DK")} m²</b></div></div>
+    <h2>Kobl til spillet</h2>
+    <div class="card">${me.linked ? `<div class="t">Appen er koblet på din spil-bruger</div><div class="s">Dine klippere og penge ligger på din bruger og følger med i spillet.</div>`
+      : `<div class="s">Har du (eller køber du) Greenkeeper's Playground, kan appen og spillet blive samme bruger – så følger dine klippere og penge med. Lav en kode her, og skriv den i spillet: telefonen (F11) · Opgaver · Kobl appen på.</div>
+      <div id="codeBox"></div><button class="btn wide" id="mkCode" style="margin-top:10px">Lav en kode</button>`}</div>
+    <h2>Læg appen på hjemmeskærmen</h2>
+    <div class="card s">iPhone: tryk på Del-knappen i Safari og vælg <b>Føj til hjemmeskærm</b>.<br>Android: tryk på ⋮ i Chrome og vælg <b>Installer app</b> / <b>Føj til startskærm</b>.</div>
+    <p class="hint">Din bruger ligger på denne telefon. Kobl den til spillet, så du ikke mister den, hvis du sletter appen.</p>`;
+  document.getElementById("nmSave").onclick = async () => { try { const r = await api("rename", { name: document.getElementById("nm").value }); id.name = r.name; store.set("id", id); say("Navnet er gemt"); } catch (e) { say(e.message); } };
+  const mk = document.getElementById("mkCode");
+  if (mk) mk.onclick = async () => { try { const r = await api("link_code"); document.getElementById("codeBox").innerHTML = `<div class="code">${esc(r.code)}</div><div class="s" style="text-align:center">Gælder i 30 minutter</div>`; } catch (e) { say(e.message); } };
+}
+
+// ---------- klippekortet ----------
+// Hoved (32 bytes): "GKJ1", bredde, højde, cellestørrelse (m), hjørnet (cm), slags, zone, hul, klippehøjde, m² at klippe.
+// Celler: zone (bit 0–2), skal klippes (bit 3), spærret (bit 4).
+function parseMap(bytes) {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (String.fromCharCode(...bytes.subarray(0, 4)) !== "GKJ1") throw new Error("Klippekortet kan ikke læses");
+  const W = dv.getUint16(4, true), H = dv.getUint16(6, true);
+  return { header: bytes.slice(0, 32), W, H, cell: dv.getFloat32(8, true), kind: bytes[20], zone: bytes[21], need: dv.getFloat32(28, true), cells: bytes.slice(32, 32 + W * H) };
+}
+function b64ToBytes(s) { const b = atob(s); const o = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) o[i] = b.charCodeAt(i); return o; }
+function bytesToB64(b) { let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(s); }
+
+// Klubbens øvebane: et lille hul lavet her på telefonen
+function practiceMap(kind) {
+  const cell = 0.5, W = kind === 0 ? 90 : 240, H = kind === 0 ? 70 : 100;
+  const zoneT = kind === 0 ? 3 : kind === 1 ? 2 : 0;
+  const cells = new Uint8Array(W * H);
+  const seed = Math.random() * 1000;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const X = x * cell, Y = y * cell;
+    let z = 0, block = false;
+    if (kind === 0) {
+      const dx = (X - W * cell / 2) / 15, dy = (Y - H * cell / 2) / 11 + 0.08 * Math.sin(X / 4 + seed);
+      const r = Math.hypot(dx, dy);
+      z = r < 1 ? 3 : r < 1.18 ? 1 : 0;
+      const bx = (X - W * cell / 2 - 17) / 4.5, by = (Y - H * cell / 2 + 6) / 3;
+      if (Math.hypot(bx, by) < 1) block = true;
+    } else if (kind === 1) {
+      const c = H * cell / 2 + 7 * Math.sin(X / 26 + seed);
+      const d = Math.abs(Y - c);
+      z = d < 15 ? 2 : d < 18 ? 1 : 0;
+      if (Math.hypot((X - 70) / 6, (Y - c - 13) / 3.5) < 1) block = true;
+    } else {
+      const c = H * cell / 2 + 6 * Math.sin(X / 30 + seed);
+      const d = Math.abs(Y - c);
+      z = d < 12 ? 2 : d < 15 ? 1 : 0;
+      if (X < 6 || X > W * cell - 6 || Y < 3 || Y > H * cell - 3) z = 2;
+    }
+    let v = z & 7;
+    if (block) v |= 16; else if (z === zoneT) v |= 8;
+    cells[y * W + x] = v;
+  }
+  let need = 0; for (const v of cells) if (v & 8) need += cell * cell;
+  const header = new Uint8Array(32);
+  header.set([71, 75, 74, 49]);
+  const dv = new DataView(header.buffer);
+  dv.setUint16(4, W, true); dv.setUint16(6, H, true); dv.setFloat32(8, cell, true); header[20] = kind; header[21] = zoneT; dv.setFloat32(28, need, true);
+  return { header, W, H, cell, kind, zone: zoneT, need, cells };
+}
+
+async function takeJob(jobId) {
+  try {
+    say("Henter klippekortet …");
+    const r = await api("job_take", { id: jobId });
+    await loadMe();
+    startMowing(parseMap(b64ToBytes(r.map_b64)), r.job, false);
+  } catch (e) { say(e.message); }
+}
+function startPractice(kind) {
+  startMowing(practiceMap(kind), { id: "oeve", title: "Klubbens øvebane – " + KIND[kind].toLowerCase(), kind, pay: 250 }, true);
+}
+
+// ---------- klipningen ----------
+const mowEl = document.getElementById("mow"), cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const mini = document.getElementById("mini"), mctx = mini.getContext("2d");
+let M = null;   // den igangværende klipning
+
+// Græssets farver: zone → (uklippet, klippet lys, klippet mørk)
+const ZC = {
+  0: [[64, 92, 44], [64, 92, 44], [64, 92, 44]],          // rough
+  1: [[74, 112, 52], [86, 128, 60], [76, 114, 52]],       // forkrave/semirough
+  2: [[70, 118, 52], [112, 166, 78], [84, 138, 60]],      // fairway
+  3: [[66, 124, 58], [118, 176, 90], [88, 148, 70]],      // green
+  4: [[72, 120, 54], [104, 158, 74], [84, 136, 60]],      // teested
+  5: [[70, 118, 52], [112, 166, 78], [84, 138, 60]],
+  6: [[64, 92, 44], [64, 92, 44], [64, 92, 44]],
+  7: [[138, 132, 120], [138, 132, 120], [138, 132, 120]],
+};
+function cellColor(v, cutAng) {
+  if (v & 16) return [214, 196, 150];   // bunker, bed, sti eller vand
+  const z = v & 7, c = ZC[z];
+  if (cutAng === 255) {
+    if (v & 8) return [c[0][0] - 12, c[0][1] - 18, c[0][2] - 10];   // langt græs, der skal klippes
+    return z === 0 || z === 6 ? c[0] : c[2];                          // allerede klippet (eller rough)
+  }
+  const a = cutAng / 256 * Math.PI * 2;
+  const k = 0.5 + 0.5 * Math.cos(a - Math.PI / 4);
+  return [0, 1, 2].map((i) => Math.round(c[2][i] + (c[1][i] - c[2][i]) * k));
+}
+
+function startMowing(map, job, practice) {
+  const kind = map.kind;
+  const mw = practice ? { own: false, id: "laan", name: "Klubbens låneklipper", ...LOAN[kind] } : mowerFor(kind);
+  const N = map.W * map.H;
+  const off = document.createElement("canvas"); off.width = map.W; off.height = map.H;
+  const octx = off.getContext("2d"); const img = octx.createImageData(map.W, map.H);
+  const cut = new Uint8Array(N).fill(255);
+  let needN = 0; for (let i = 0; i < N; i++) if (map.cells[i] & 8) needN++;
+  // Start: kanten af det, der skal klippes, nærmest midten af kortet til venstre
+  let sx = map.W * map.cell / 2, sy = map.H * map.cell / 2, best = 1e9;
+  for (let i = 0; i < N; i += 7) if (map.cells[i] & 8) {
+    const x = (i % map.W + 0.5) * map.cell, y = (Math.floor(i / map.W) + 0.5) * map.cell;
+    const d = x * 0.6 + Math.abs(y - sy);
+    if (d < best) { best = d; sx = x - 3; sy = y; }
+  }
+  M = { map, job, practice, mw, off, octx, img, cut, needN, cutN: 0, x: Math.max(1, sx), y: sy, h: 0, v: 0, pts: [], zoom: ZOOM[kind] * (window.devicePixelRatio || 1) / 1.6, dirty: true, saveAt: 0 };
+  // Fortsæt, hvor du slap (samme opgave på denne telefon)
+  const prog = practice ? null : store.get("prog_" + job.id, null);
+  if (prog && prog.cut) {
+    const c = b64ToBytes(prog.cut);
+    if (c.length === N) { M.cut = c; for (let i = 0; i < N; i++) if (c[i] !== 255 && (map.cells[i] & 8)) M.cutN++; }
+    M.pts = prog.pts || []; M.x = prog.x ?? M.x; M.y = prog.y ?? M.y; M.h = prog.h ?? 0;
+  }
+  for (let i = 0; i < N; i++) setPix(i);
+  octx.putImageData(img, 0, 0);
+  mini.width = map.W; mini.height = map.H;
+  const mw2 = Math.min(140, window.innerWidth * 0.36); mini.style.width = mw2 + "px"; mini.style.height = (mw2 * map.H / map.W) + "px";
+  document.getElementById("mowinfo").textContent = `${job.title} · ${mw.name} (${mw.w} m) · ${practice ? "øvebane" : kr(job.pay) + (mw.own ? "" : " – klubben tager 30 %")}`;
+  mowEl.style.display = "block";
+  resize(); last = performance.now(); requestAnimationFrame(frame);
+}
+function setPix(i) {
+  const c = cellColor(M.map.cells[i], M.cut[i]);
+  const d = M.img.data; d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255;
+}
+function blocked(x, y) {
+  const m = M.map, cx = Math.floor(x / m.cell), cy = Math.floor(y / m.cell);
+  if (cx < 0 || cy < 0 || cx >= m.W || cy >= m.H) return true;
+  return (m.cells[cy * m.W + cx] & 16) !== 0;
+}
+// Klip strimlen fra (x0,y0) til (x1,y1) – kun celler i opgavens zone, der skal klippes
+function stamp(x0, y0, x1, y1) {
+  const m = M.map, hw = M.mw.w / 2, dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if (L < 1e-4) return;
+  const fx = dx / L, fy = dy / L;
+  const ang = Math.round(Math.atan2(fy, fx) / (Math.PI * 2) * 256) & 255;
+  const minx = Math.max(0, Math.floor((Math.min(x0, x1) - hw) / m.cell)), maxx = Math.min(m.W - 1, Math.floor((Math.max(x0, x1) + hw) / m.cell));
+  const miny = Math.max(0, Math.floor((Math.min(y0, y1) - hw) / m.cell)), maxy = Math.min(m.H - 1, Math.floor((Math.max(y0, y1) + hw) / m.cell));
+  let changed = false;
+  for (let cy = miny; cy <= maxy; cy++) for (let cx = minx; cx <= maxx; cx++) {
+    const px = (cx + 0.5) * m.cell - x0, py = (cy + 0.5) * m.cell - y0;
+    const f = px * fx + py * fy, l = -px * fy + py * fx;
+    if (f < -m.cell * 0.5 || f > L + m.cell * 0.5 || Math.abs(l) > hw) continue;
+    const i = cy * m.W + cx, v = m.cells[i];
+    if (v & 16 || (v & 7) !== m.zone) continue;
+    if (M.cut[i] === 255 && (v & 8)) M.cutN++;
+    M.cut[i] = ang; setPix(i); changed = true;
+  }
+  if (changed) M.dirty = true;
+}
+
+// Styrepinden: peg i den retning, klipperen skal køre (længden = farten)
+const stick = document.getElementById("stick"), knob = document.getElementById("knob");
+let joy = { x: 0, y: 0, id: null };
+function joyMove(e) {
+  const r = stick.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let dx = e.clientX - cx, dy = e.clientY - cy; const R = r.width / 2, L = Math.hypot(dx, dy);
+  if (L > R) { dx *= R / L; dy *= R / L; }
+  joy.x = dx / R; joy.y = dy / R;
+  knob.style.transform = `translate(${dx}px,${dy}px)`;
+}
+stick.addEventListener("pointerdown", (e) => { joy.id = e.pointerId; stick.setPointerCapture(e.pointerId); joyMove(e); });
+stick.addEventListener("pointermove", (e) => { if (e.pointerId === joy.id) joyMove(e); });
+const joyEnd = (e) => { if (e.pointerId !== joy.id) return; joy = { x: 0, y: 0, id: null }; knob.style.transform = ""; };
+stick.addEventListener("pointerup", joyEnd); stick.addEventListener("pointercancel", joyEnd);
+// Tastatur (til test på computeren): piletaster / WASD
+const keys = {};
+addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
+addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
+
+document.getElementById("zIn").onclick = () => { if (M) M.zoom = Math.min(90, M.zoom * 1.3); };
+document.getElementById("zOut").onclick = () => { if (M) M.zoom = Math.max(3, M.zoom / 1.3); };
+document.getElementById("mowBack").onclick = () => { if (!M) return; saveProg(); M = null; mowEl.style.display = "none"; render(); };
+document.getElementById("mowDone").onclick = submit;
+
+function resize() { const d = window.devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; }
+addEventListener("resize", resize);
+
+function saveProg() {
+  if (!M || M.practice) return;
+  store.set("prog_" + M.job.id, { cut: bytesToB64(M.cut), pts: M.pts.slice(-60000), x: M.x, y: M.y, h: M.h });
+}
+
+let last = 0;
+function frame(t) {
+  if (!M) return;
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  // Ønsket retning og fart fra styrepinden (eller tastaturet)
+  let jx = joy.x, jy = joy.y;
+  const kx = (keys["arrowright"] || keys["d"] ? 1 : 0) - (keys["arrowleft"] || keys["a"] ? 1 : 0);
+  const ky = (keys["arrowdown"] || keys["s"] ? 1 : 0) - (keys["arrowup"] || keys["w"] ? 1 : 0);
+  if (kx || ky) { const l = Math.hypot(kx, ky); jx = kx / l; jy = ky / l; }
+  const mag = Math.min(1, Math.hypot(jx, jy));
+  let want = 0;
+  if (mag > 0.12) {
+    const target = Math.atan2(jy, jx);
+    let d = target - M.h; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
+    const turn = 2.6 * dt;   // rad/s
+    M.h += Math.max(-turn, Math.min(turn, d));
+    want = M.mw.v * mag * Math.max(0.25, Math.cos(d));   // sænk farten i skarpe sving
+  }
+  M.v += (want - M.v) * Math.min(1, dt * 3);
+  if (M.v > 0.02) {
+    const nx = M.x + Math.cos(M.h) * M.v * dt, ny = M.y + Math.sin(M.h) * M.v * dt;
+    if (!blocked(nx, ny)) {
+      stamp(M.x, M.y, nx, ny);
+      M.x = nx; M.y = ny;
+      const lp = M.pts.length ? M.pts[M.pts.length - 1] : null;
+      if (!lp || lp === null || Math.hypot(nx - lp[0], ny - lp[1]) > 0.35) M.pts.push([+nx.toFixed(2), +ny.toFixed(2)]);
+    } else { M.v = 0; if (M.pts.length && M.pts[M.pts.length - 1] !== null) M.pts.push(null); }
+  }
+  if (t > M.saveAt) { M.saveAt = t + 5000; saveProg(); }
+  draw();
+  requestAnimationFrame(frame);
+}
+
+function draw() {
+  const W = cv.width, H = cv.height, z = M.zoom, m = M.map;
+  if (M.dirty) { M.octx.putImageData(M.img, 0, 0); M.dirty = false; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#1d2b1c"; ctx.fillRect(0, 0, W, H);
+  ctx.imageSmoothingEnabled = z / (1 / m.cell) < 6;
+  ctx.setTransform(z, 0, 0, z, W / 2 - M.x * z, H / 2 - M.y * z);
+  ctx.drawImage(M.off, 0, 0, m.W * m.cell, m.H * m.cell);
+  // Klipperen
+  ctx.translate(M.x, M.y); ctx.rotate(M.h);
+  const w = M.mw.w, len = Math.max(1.4, w * 0.7);
+  ctx.fillStyle = "#c33a2b"; ctx.fillRect(-len, -w * 0.32, len * 0.8, w * 0.64);
+  ctx.fillStyle = "#e6e2d8"; ctx.fillRect(-0.1, -w / 2, 0.42, w);
+  ctx.fillStyle = "#222"; ctx.fillRect(-len * 0.85, -w * 0.4, len * 0.25, 0.12); ctx.fillRect(-len * 0.85, w * 0.4 - 0.12, len * 0.25, 0.12);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // Fremdrift
+  const p = M.needN ? M.cutN / M.needN : 0;
+  document.getElementById("bar").style.width = (p * 100).toFixed(1) + "%";
+  document.getElementById("pct").textContent = Math.floor(p * 100) + " %";
+  // Det lille kort
+  mctx.drawImage(M.off, 0, 0);
+  mctx.fillStyle = "#ff4a3a"; mctx.fillRect(M.x / m.cell - 2, M.y / m.cell - 2, 5, 5);
+}
+
+async function submit() {
+  if (!M) return;
+  const p = M.needN ? M.cutN / M.needN : 0;
+  if (!confirm(`Aflever med ${Math.floor(p * 100)} % klippet?` + (M.practice ? "" : `\nDu får ca. ${kr(M.job.pay * p * (M.mw.own ? 1 : 0.7))}.`))) return;
+  const cutM2 = M.cutN * M.map.cell * M.map.cell;
+  try {
+    let r;
+    if (M.practice) r = await api("practice_done", { coverage: p, cut_m2: cutM2 });
+    else {
+      // Sporet: "GKS1" + kortets hoved + antal + bredde + punkterne (NaN = løft)
+      const pts = M.pts;
+      const buf = new ArrayBuffer(44 + pts.length * 8), dv = new DataView(buf), u8 = new Uint8Array(buf);
+      u8.set([71, 75, 83, 49]); u8.set(M.map.header, 4);
+      dv.setUint32(36, pts.length, true); dv.setFloat32(40, M.mw.w, true);
+      pts.forEach((q, k) => { dv.setFloat32(44 + k * 8, q ? q[0] : NaN, true); dv.setFloat32(48 + k * 8, q ? q[1] : NaN, true); });
+      r = await api("job_submit", { id: M.job.id, strokes_b64: bytesToB64(u8), coverage: p, cut_m2: cutM2, mower: M.mw.id });
+      store.set("prog_" + M.job.id, null);
+    }
+    M = null; mowEl.style.display = "none";
+    say(r.note ? r.note : `Godt klippet! ${kr(r.earned)} er sat ind på din konto`);
+    render();
+  } catch (e) { say(e.message); }
+}
+
+// ---------- start ----------
+(async function boot() {
+  if (!id.name) {
+    main.innerHTML = `<h2>Velkommen</h2><div class="card"><div class="t" style="margin-bottom:6px">Klip baner for golfklubber verden over</div>
+      <div class="s">Tag klippeopgaver fra den internationale væg, klip dem her på telefonen og tjen penge. Klubben låner dig en klipper til at starte med – senere kan du købe dine egne (eller få en i gave, hvis du gør det godt). Det er gratis.</div></div>
+      <h2>Hvad skal du hedde?</h2><input id="nm0" maxlength="32" placeholder="Dit navn på væggen"><button class="btn wide" id="go0" style="margin-top:10px">Kom i gang</button>`;
+    document.getElementById("go0").onclick = async () => {
+      const n = document.getElementById("nm0").value.trim(); if (!n) return say("Skriv et navn");
+      try { await api("hello", { name: n }); id.name = n; store.set("id", id); render(); } catch (e) { say(e.message); }
+    };
+    return;
+  }
+  try { await api("hello", { name: id.name }); } catch {}
+  render();
+})();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
