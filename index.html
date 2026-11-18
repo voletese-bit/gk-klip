@@ -430,7 +430,7 @@ function draw() {
   if (M.dirty) { M.octx.putImageData(M.img, 0, 0); M.dirty = false; }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = "#1d2b1c"; ctx.fillRect(0, 0, W, H);
-  ctx.imageSmoothingEnabled = z / (1 / m.cell) < 6;
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
   ctx.setTransform(z, 0, 0, z, W / 2 - M.x * z, H / 2 - M.y * z);
   ctx.drawImage(M.off, 0, 0, m.W * m.cell, m.H * m.cell);
   // Klipperen
