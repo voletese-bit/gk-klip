@@ -54,7 +54,8 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 .code{font-size:34px;letter-spacing:.2em;font-weight:800;color:var(--lime);text-align:center;padding:8px 0}
 /* Klippeskærmen */
 #mow{position:fixed;inset:0;background:#0a120d;z-index:30;display:none;touch-action:none}
-#cv{position:absolute;inset:0;width:100%;height:100%}
+#cv,#cv3{position:absolute;inset:0;width:100%;height:100%}
+#cv3{display:none}
 #hud{position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--safe-t)) 12px 10px;display:flex;gap:10px;align-items:center;background:linear-gradient(#0a120dcc,#0a120d00)}
 #hud .bar{flex:1;height:10px;border-radius:6px;background:#ffffff1f;overflow:hidden}
 #hud .bar i{display:block;height:100%;background:var(--lime);width:0}
@@ -82,16 +83,19 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 
 <div id="mow">
   <canvas id="cv"></canvas>
+  <canvas id="cv3"></canvas>
   <div id="hud"><button class="btn small ghost" id="mowBack" style="background:#0a120d99">‹</button><div class="bar"><i id="bar"></i></div><span class="pct" id="pct">0 %</span></div>
   <div id="mowinfo"></div>
   <canvas id="mini"></canvas>
   <div id="stick"><div id="knob"></div></div>
   <div id="mowbtns">
+    <button class="btn ghost small" id="camBtn" style="background:#0a120d99">Kamera</button>
     <div id="zoom"><button class="btn ghost" id="zOut" style="background:#0a120d99">−</button><button class="btn ghost" id="zIn" style="background:#0a120d99">+</button></div>
     <button class="btn" id="mowDone">Aflever</button>
   </div>
 </div>
 
+<script src="three.min.js"></script>
 <script>
 "use strict";
 const API = "https://wvrtaeefmjgyvxmumrgc.supabase.co/functions/v1/gk-api";
@@ -306,6 +310,8 @@ function startMowing(map, job, practice) {
   const off = document.createElement("canvas"); off.width = map.W; off.height = map.H;
   const octx = off.getContext("2d"); const img = octx.createImageData(map.W, map.H);
   const cut = new Uint8Array(N).fill(255);
+  const off3 = document.createElement("canvas"); off3.width = map.W; off3.height = map.H;
+  const o3ctx = off3.getContext("2d"), img3 = o3ctx.createImageData(map.W, map.H);
   let needN = 0; for (let i = 0; i < N; i++) if (map.cells[i] & 8) needN++;
   // Start: kanten af det, der skal klippes, nærmest midten af kortet til venstre
   let sx = map.W * map.cell / 2, sy = map.H * map.cell / 2, best = 1e9;
@@ -314,7 +320,7 @@ function startMowing(map, job, practice) {
     const d = x * 0.6 + Math.abs(y - sy);
     if (d < best) { best = d; sx = x - 3; sy = y; }
   }
-  M = { map, job, practice, mw, off, octx, img, cut, needN, cutN: 0, x: Math.max(1, sx), y: sy, h: 0, v: 0, pts: [], zoom: ZOOM[kind] * (window.devicePixelRatio || 1) / 1.6, dirty: true, saveAt: 0 };
+  M = { map, job, practice, mw, off, octx, img, off3, o3ctx, img3, cut, needN, cutN: 0, x: Math.max(1, sx), y: sy, h: 0, v: 0, pts: [], zoom: ZOOM[kind] * (window.devicePixelRatio || 1) / 1.6, dirty: true, saveAt: 0 };
   // Fortsæt, hvor du slap (samme opgave på denne telefon)
   const prog = practice ? null : store.get("prog_" + job.id, null);
   if (prog && prog.cut) {
@@ -323,16 +329,22 @@ function startMowing(map, job, practice) {
     M.pts = prog.pts || []; M.x = prog.x ?? M.x; M.y = prog.y ?? M.y; M.h = prog.h ?? 0;
   }
   for (let i = 0; i < N; i++) setPix(i);
-  octx.putImageData(img, 0, 0);
+  octx.putImageData(img, 0, 0); o3ctx.putImageData(img3, 0, 0);
   mini.width = map.W; mini.height = map.H;
   const mw2 = Math.min(140, window.innerWidth * 0.36); mini.style.width = mw2 + "px"; mini.style.height = (mw2 * map.H / map.W) + "px";
   document.getElementById("mowinfo").textContent = `${job.title} · ${mw.name} (${mw.w} m) · ${practice ? "øvebane" : kr(job.pay) + (mw.own ? "" : " – klubben tager 30 %")}`;
   mowEl.style.display = "block";
+  if (init3()) build3();
+  applyCam();
   resize(); last = performance.now(); requestAnimationFrame(frame);
 }
 function setPix(i) {
-  const c = cellColor(M.map.cells[i], M.cut[i]);
+  const v = M.map.cells[i], a = M.cut[i];
+  const c = cellColor(v, a);
   const d = M.img.data; d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255;
+  // 3D: det klippede græs får sin farve uden striber – striberne laves af kameraets retning i forhold til klipperetningen
+  const c3 = a === 255 || (v & 16) ? c : (() => { const z = ZC[v & 7]; return [0, 1, 2].map((k) => (z[1][k] + z[2][k]) >> 1); })();
+  const e = M.img3.data; e[i * 4] = c3[0]; e[i * 4 + 1] = c3[1]; e[i * 4 + 2] = c3[2]; e[i * 4 + 3] = 255;
 }
 function blocked(x, y) {
   const m = M.map, cx = Math.floor(x / m.cell), cy = Math.floor(y / m.cell);
@@ -379,12 +391,16 @@ const keys = {};
 addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
 addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
 
-document.getElementById("zIn").onclick = () => { if (M) M.zoom = Math.min(90, M.zoom * 1.3); };
-document.getElementById("zOut").onclick = () => { if (M) M.zoom = Math.max(3, M.zoom / 1.3); };
+document.getElementById("zIn").onclick = () => { if (!M) return; if (use3D()) zoom3(1 / 1.25); else M.zoom = Math.min(90, M.zoom * 1.3); };
+document.getElementById("zOut").onclick = () => { if (!M) return; if (use3D()) zoom3(1.25); else M.zoom = Math.max(3, M.zoom / 1.3); };
+document.getElementById("camBtn").onclick = () => { camMode = (camMode + 1) % 3; store.set("cam", camMode); applyCam(); };
 document.getElementById("mowBack").onclick = () => { if (!M) return; saveProg(); M = null; mowEl.style.display = "none"; render(); };
 document.getElementById("mowDone").onclick = submit;
 
-function resize() { const d = window.devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; }
+function resize() {
+  const d = window.devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d;
+  if (G3) { G3.r.setSize(innerWidth, innerHeight, false); G3.cam.aspect = innerWidth / Math.max(1, innerHeight); G3.cam.updateProjectionMatrix(); }
+}
 addEventListener("resize", resize);
 
 function saveProg() {
@@ -396,6 +412,7 @@ let last = 0;
 function frame(t) {
   if (!M) return;
   const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  if (G3) G3.dtLast = dt;
   // Ønsket retning og fart fra styrepinden (eller tastaturet)
   let jx = joy.x, jy = joy.y;
   const kx = (keys["arrowright"] || keys["d"] ? 1 : 0) - (keys["arrowleft"] || keys["a"] ? 1 : 0);
@@ -403,7 +420,16 @@ function frame(t) {
   if (kx || ky) { const l = Math.hypot(kx, ky); jx = kx / l; jy = ky / l; }
   const mag = Math.min(1, Math.hypot(jx, jy));
   let want = 0;
-  if (mag > 0.12) {
+  if (use3D()) {
+    // Bag maskinen eller fra sædet: pinden frem/tilbage er farten, til siden drejer maskinen (W/S og A/D på tastaturet)
+    let fw = -joy.y, tr = joy.x;
+    const kf = (keys["arrowup"] || keys["w"] ? 1 : 0) - (keys["arrowdown"] || keys["s"] ? 1 : 0);
+    const kt = (keys["arrowright"] || keys["d"] ? 1 : 0) - (keys["arrowleft"] || keys["a"] ? 1 : 0);
+    if (kf || kt) { fw = kf; tr = kt; }
+    if (Math.abs(fw) < 0.12) fw = 0; if (Math.abs(tr) < 0.1) tr = 0;
+    M.h += tr * 1.5 * dt * (fw < 0 ? -1 : 1);
+    want = fw > 0 ? M.mw.v * fw : M.mw.v * 0.45 * fw;
+  } else if (mag > 0.12) {
     const target = Math.atan2(jy, jx);
     let d = target - M.h; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
     const turn = 2.6 * dt;   // rad/s
@@ -411,7 +437,7 @@ function frame(t) {
     want = M.mw.v * mag * Math.max(0.25, Math.cos(d));   // sænk farten i skarpe sving
   }
   M.v += (want - M.v) * Math.min(1, dt * 3);
-  if (M.v > 0.02) {
+  if (Math.abs(M.v) > 0.02) {
     const nx = M.x + Math.cos(M.h) * M.v * dt, ny = M.y + Math.sin(M.h) * M.v * dt;
     if (!blocked(nx, ny)) {
       stamp(M.x, M.y, nx, ny);
@@ -426,8 +452,22 @@ function frame(t) {
 }
 
 function draw() {
+  const m = M.map;
+  if (M.dirty) {
+    M.octx.putImageData(M.img, 0, 0); M.dirty = false;
+    if (use3D() && G3.tex) { M.o3ctx.putImageData(M.img3, 0, 0); G3.tex.needsUpdate = true; G3.cutT.needsUpdate = true; }
+  }
+  if (use3D()) draw3(); else draw2();
+  // Fremdrift
+  const p = M.needN ? M.cutN / M.needN : 0;
+  document.getElementById("bar").style.width = (p * 100).toFixed(1) + "%";
+  document.getElementById("pct").textContent = Math.floor(p * 100) + " %";
+  // Det lille kort
+  mctx.drawImage(M.off, 0, 0);
+  mctx.fillStyle = "#ff4a3a"; mctx.fillRect(M.x / m.cell - 2, M.y / m.cell - 2, 5, 5);
+}
+function draw2() {
   const W = cv.width, H = cv.height, z = M.zoom, m = M.map;
-  if (M.dirty) { M.octx.putImageData(M.img, 0, 0); M.dirty = false; }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = "#1d2b1c"; ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
@@ -440,14 +480,196 @@ function draw() {
   ctx.fillStyle = "#e6e2d8"; ctx.fillRect(-0.1, -w / 2, 0.42, w);
   ctx.fillStyle = "#222"; ctx.fillRect(-len * 0.85, -w * 0.4, len * 0.25, 0.12); ctx.fillRect(-len * 0.85, w * 0.4 - 0.12, len * 0.25, 0.12);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  // Fremdrift
-  const p = M.needN ? M.cutN / M.needN : 0;
-  document.getElementById("bar").style.width = (p * 100).toFixed(1) + "%";
-  document.getElementById("pct").textContent = Math.floor(p * 100) + " %";
-  // Det lille kort
-  mctx.drawImage(M.off, 0, 0);
-  mctx.fillStyle = "#ff4a3a"; mctx.fillRect(M.x / m.cell - 2, M.y / m.cell - 2, 5, 5);
 }
+// ---------- 3D: bag maskinen (3. person) og fra sædet (1. person) ----------
+// Kameraet: 0 = oppefra (det flade kort), 1 = bag maskinen, 2 = fra sædet
+const cv3 = document.getElementById("cv3");
+let camMode = store.get("cam", 1);
+let G3 = null, G3bad = false;
+const CAMN = ["Oppefra", "Bag maskinen", "Fra sædet"];
+function use3D() { return camMode > 0 && !!G3 && !G3bad; }
+function applyCam() {
+  const ok = !!G3 && !G3bad;
+  if (!ok) camMode = 0;
+  cv3.style.display = use3D() ? "block" : "none";
+  cv.style.display = use3D() ? "none" : "block";
+  const b = document.getElementById("camBtn");
+  b.style.display = ok ? "" : "none";
+  b.textContent = "Kamera: " + CAMN[camMode];
+  if (G3 && M && G3.tex) { M.o3ctx.putImageData(M.img3, 0, 0); G3.tex.needsUpdate = true; G3.cutT.needsUpdate = true; }
+  if (G3) { G3.snap = true; G3.cam.fov = camMode === 2 ? G3.fov1 : 58; G3.cam.updateProjectionMatrix(); }
+}
+function zoom3(f) {
+  if (!G3) return;
+  if (camMode === 1) G3.dist = Math.max(3.5, Math.min(45, G3.dist * f));
+  else { G3.fov1 = Math.max(40, Math.min(95, G3.fov1 * f)); G3.cam.fov = G3.fov1; G3.cam.updateProjectionMatrix(); }
+}
+
+const GROUND_VS = `
+varying vec2 vUv; varying vec3 vW;
+void main() { vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+const GROUND_FS = `
+uniform sampler2D map, cutT; uniform vec3 fogC; uniform float fogN, fogF, outer;
+varying vec2 vUv; varying vec3 vW;
+float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y); }
+void main() {
+  vec3 c = outer > 0.5 ? vec3(0.235, 0.345, 0.165) : texture2D(map, vUv).rgb;
+  float d = length(vW - cameraPosition);
+  // Græssets struktur tæt på (strå og tuer) – tones ud i det fjerne, så det ikke flimrer
+  float fine = n(vW.xz * 11.0) * 0.55 + n(vW.xz * 31.0) * 0.45;
+  float k = mix(0.8 + 0.32 * fine, 1.0, smoothstep(6.0, 40.0, d));
+  if (outer < 0.5) {
+    float a = texture2D(cutT, vec2(vUv.x, 1.0 - vUv.y)).r * 255.0;
+    if (a < 254.5) {
+      // Klippet: græsset ligger i klipperetningen – lyst, når man kigger samme vej, mørkt imod
+      float ang = a / 256.0 * 6.2831853;
+      vec2 vv = normalize(vW.xz - cameraPosition.xz + vec2(1e-4));
+      c *= 1.0 + 0.24 * dot(vec2(cos(ang), sin(ang)), vv);
+    } else c *= 0.84 + 0.3 * n(vW.xz * 3.3);    // langt, uklippet græs: pjusket
+  } else c *= 0.84 + 0.3 * n(vW.xz * 3.3);
+  float big = n(vW.xz * 0.07) * 0.6 + n(vW.xz * 0.21) * 0.4;
+  c *= k * (0.9 + 0.2 * big);
+  c = mix(c, fogC, smoothstep(fogN, fogF, d));
+  gl_FragColor = vec4(c, 1.0);
+}`;
+
+function init3() {
+  if (G3 || G3bad) return G3;
+  if (!window.THREE) { G3bad = true; return null; }
+  try {
+    const r = new THREE.WebGLRenderer({ canvas: cv3, antialias: true, powerPreference: "high-performance" });
+    r.useLegacyLights = true;
+    r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    const scene = new THREE.Scene();
+    const skyC = new THREE.Color(0xb7cfe0);
+    scene.background = skyC;
+    scene.fog = new THREE.Fog(0xb7cfe0, 90, 520);
+    const cam = new THREE.PerspectiveCamera(58, 1, 0.08, 2500);
+    scene.add(new THREE.HemisphereLight(0xe8f2ff, 0x3b4a2c, 0.75));
+    const sun = new THREE.DirectionalLight(0xfff0d8, 0.95); sun.position.set(-70, 120, 50); scene.add(sun);
+    // Himlen: en svag overgang fra lyst ved horisonten til blåt oppe
+    const skyGeo = new THREE.SphereGeometry(1800, 24, 12);
+    const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false,
+      vertexShader: "varying float vy; void main(){ vy = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+      fragmentShader: "varying float vy; void main(){ vec3 lo = vec3(0.80,0.86,0.89), hi = vec3(0.42,0.62,0.84); gl_FragColor = vec4(mix(lo, hi, smoothstep(0.0, 0.5, vy)), 1.0); }" });
+    const sky = new THREE.Mesh(skyGeo, skyMat); sky.renderOrder = -1; scene.add(sky);
+    G3 = { r, scene, cam, sky, skyC, dist: 9, fov1: 72, snap: true, eye: new THREE.Vector3(), look: new THREE.Vector3(), objs: [] };
+  } catch (e) { G3bad = true; G3 = null; }
+  return G3;
+}
+
+function groundMat(tex, outer) {
+  return new THREE.ShaderMaterial({
+    uniforms: { map: { value: tex }, cutT: { value: G3.cutT }, fogC: { value: new THREE.Color(0xc4d6e2) }, fogN: { value: 120 }, fogF: { value: 600 }, outer: { value: outer ? 1 : 0 } },
+    vertexShader: GROUND_VS, fragmentShader: GROUND_FS,
+  });
+}
+
+// En klipper i Thomas Tigers-farver (gul og grafit) – uden fører. Lokalt: +X er fremad, Y op, Z til siden
+function mowerModel(kind, w) {
+  const g = new THREE.Group();
+  const yel = new THREE.MeshLambertMaterial({ color: 0xf0b324 }), gra = new THREE.MeshLambertMaterial({ color: 0x2c3033 });
+  const blk = new THREE.MeshLambertMaterial({ color: 0x141414 }), stl = new THREE.MeshLambertMaterial({ color: 0x9aa3a8 });
+  const box = (sx, sy, sz, m, x, y, z) => { const b = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), m); b.position.set(x, y, z); g.add(b); return b; };
+  const wheel = (r, wd, x, z) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, wd, 18), blk); c.rotation.x = Math.PI / 2; c.position.set(x, r, z); g.add(c);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.5, r * 0.5, wd + 0.02, 12), yel); hub.rotation.x = Math.PI / 2; hub.position.copy(c.position); g.add(hub); };
+  if (kind === 0) {
+    // Greensklipper til at gå bag: klippecylinder foran, motor og bøjle bagud
+    box(0.34, 0.22, w, gra, 0.15, 0.16, 0);           // cylinderen
+    box(0.5, 0.3, Math.max(0.42, w * 0.8), yel, -0.28, 0.32, 0);   // motorhus
+    box(0.32, 0.16, w * 0.9, gra, -0.62, 0.12, 0);    // tromlen bagpå
+    const bar = (z) => { const b = box(0.9, 0.04, 0.04, stl, -0.95, 0.7, z); b.rotation.z = -0.62; };
+    bar(-0.2); bar(0.2);
+    box(0.05, 0.05, 0.5, stl, -1.32, 0.98, 0);        // håndtaget
+    return g;
+  }
+  const bw = Math.min(1.5, 0.9 + w * 0.15);
+  // Klippeenhederne foran (tre for fairway/rough), så hele bredden dækkes
+  const units = kind === 1 ? 3 : 5, uw = w / (units === 5 ? 3.2 : 2.4);
+  const pos = units === 3 ? [[0.95, -w / 2 + uw / 2], [0.95, w / 2 - uw / 2], [1.45, 0]] : [[0.9, -w / 2 + uw / 2], [0.9, w / 2 - uw / 2], [1.45, -uw * 0.55], [1.45, uw * 0.55], [0.55, 0]];
+  for (const [x, z] of pos) { box(0.42, 0.26, uw, yel, x, 0.2, z); box(0.2, 0.2, uw * 1.02, gra, x - 0.2, 0.18, z); }
+  box(2.1, 0.55, bw, yel, -0.45, 0.72, 0);              // karrosseriet
+  box(0.9, 0.5, bw * 0.92, gra, -1.05, 1.2, 0);         // motorhjelmen bagpå
+  box(0.5, 0.12, 0.5, blk, -0.25, 1.06, 0);             // sædet
+  box(0.12, 0.5, 0.5, blk, -0.48, 1.33, 0);             // ryglænet
+  box(0.3, 0.4, 0.06, gra, 0.35, 1.2, 0);               // rattet/konsollen
+  // Styrtbøjlen
+  box(0.07, 1.35, 0.07, gra, -0.75, 1.6, -bw / 2 + 0.05); box(0.07, 1.35, 0.07, gra, -0.75, 1.6, bw / 2 - 0.05); box(0.07, 0.07, bw, gra, -0.75, 2.27, 0);
+  wheel(0.36, 0.28, 0.35, -bw / 2 - 0.12); wheel(0.36, 0.28, 0.35, bw / 2 + 0.12);
+  wheel(0.28, 0.22, -1.2, -bw / 2 + 0.05); wheel(0.28, 0.22, -1.2, bw / 2 - 0.05);
+  return g;
+}
+
+function build3() {
+  const G = G3, m = M.map, Wm = m.W * m.cell, Hm = m.H * m.cell;
+  for (const o of G.objs) { G.scene.remove(o); o.traverse && o.traverse((c) => { if (c.geometry) c.geometry.dispose(); }); }
+  G.objs = [];
+  if (G.tex) G.tex.dispose();
+  if (G.cutT) G.cutT.dispose();
+  G.cutT = new THREE.DataTexture(M.cut, m.W, m.H, THREE.RedFormat, THREE.UnsignedByteType);
+  G.cutT.magFilter = G.cutT.minFilter = THREE.NearestFilter; G.cutT.needsUpdate = true;
+  M.o3ctx.putImageData(M.img3, 0, 0);
+  const tex = new THREE.CanvasTexture(M.off3);
+  tex.colorSpace = THREE.NoColorSpace;
+  tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.anisotropy = Math.min(8, G.r.capabilities.getMaxAnisotropy());
+  G.tex = tex;
+  const add = (o) => { G.scene.add(o); G.objs.push(o); return o; };
+  const field = add(new THREE.Mesh(new THREE.PlaneGeometry(Wm, Hm), groundMat(tex, false)));
+  field.rotation.x = -Math.PI / 2; field.position.set(Wm / 2, 0, Hm / 2);
+  const outer = add(new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), groundMat(tex, true)));
+  outer.rotation.x = -Math.PI / 2; outer.position.set(Wm / 2, -0.03, Hm / 2);
+  // Træer rundt om banen (ikke inde på kortet), så man kan se, hvor man er
+  const N = 170;
+  const crown = new THREE.InstancedMesh(new THREE.ConeGeometry(2.4, 7, 8), new THREE.MeshLambertMaterial({ color: 0x2f4a26 }), N);
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.3, 2.2, 6), new THREE.MeshLambertMaterial({ color: 0x4a3a2a }), N);
+  const o3 = new THREE.Object3D();
+  let k = 0, tries = 0;
+  while (k < N && tries++ < 5000) {
+    const x = -70 + Math.random() * (Wm + 140), z = -70 + Math.random() * (Hm + 140);
+    if (x > -6 && x < Wm + 6 && z > -6 && z < Hm + 6) continue;
+    const s = 0.7 + Math.random() * 0.9;
+    o3.position.set(x, 2.2 * s + 3.5 * s, z); o3.scale.set(s, s * (0.9 + Math.random() * 0.5), s); o3.rotation.set(0, Math.random() * 6, 0); o3.updateMatrix(); crown.setMatrixAt(k, o3.matrix);
+    o3.position.set(x, 1.1 * s, z); o3.scale.set(s, s, s); o3.updateMatrix(); trunk.setMatrixAt(k, o3.matrix);
+    const c = new THREE.Color().setHSL(0.27 + Math.random() * 0.06, 0.35 + Math.random() * 0.2, 0.17 + Math.random() * 0.08);
+    crown.setColorAt(k, c);
+    k++;
+  }
+  crown.count = trunk.count = k;
+  add(crown); add(trunk);
+  // Bunkere og andet, man ikke kan køre i: let sænket sand er allerede i kortet – her et lille kantløft, så de ses fra siden
+  G.mower = add(mowerModel(M.map.kind, M.mw.w));
+  G.dist = M.map.kind === 0 ? 4.5 : 9;
+  G.snap = true;
+}
+
+function draw3() {
+  const G = G3, c = G.cam;
+  const fx = Math.cos(M.h), fz = Math.sin(M.h);
+  G.mower.position.set(M.x, 0, M.y);
+  G.mower.rotation.y = -M.h;
+  const eye = new THREE.Vector3(), look = new THREE.Vector3();
+  const walk = M.map.kind === 0;
+  if (camMode === 2) {
+    // Fra sædet (eller bag håndtaget på greensklipperen): kig frem og lidt ned mod klippeenhederne
+    const back = walk ? 1.7 : 0.35, eh = walk ? 1.65 : 2.05;
+    eye.set(M.x - fx * back, eh, M.y - fz * back);
+    look.set(M.x + fx * 9, 0, M.y + fz * 9);
+  } else {
+    const d = G.dist, hgt = 1.6 + d * 0.42;
+    eye.set(M.x - fx * d, hgt, M.y - fz * d);
+    look.set(M.x + fx * 4, 0.6, M.y + fz * 4);
+  }
+  const a = G.snap ? 1 : 1 - Math.exp(-(camMode === 2 ? 14 : 4.5) * Math.min(0.05, G.dtLast || 0.016));
+  G.eye.lerp(eye, a); G.look.lerp(look, a);
+  if (G.snap) { G.eye.copy(eye); G.look.copy(look); G.snap = false; }
+  c.position.copy(G.eye); c.lookAt(G.look);
+  G.sky.position.copy(c.position);
+  G.r.render(G.scene, c);
+}
+
 
 async function submit() {
   if (!M) return;
