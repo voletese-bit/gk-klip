@@ -366,7 +366,7 @@ function stamp(x0, y0, x1, y1) {
     if (f < -m.cell * 0.5 || f > L + m.cell * 0.5 || Math.abs(l) > hw) continue;
     const i = cy * m.W + cx, v = m.cells[i];
     if (v & 16 || (v & 7) !== m.zone) continue;
-    if (M.cut[i] === 255 && (v & 8)) M.cutN++;
+    if (M.cut[i] === 255 && (v & 8)) { M.cutN++; M.cutFrame = (M.cutFrame || 0) + 1; }
     M.cut[i] = ang; setPix(i); changed = true;
   }
   if (changed) M.dirty = true;
@@ -446,6 +446,7 @@ function frame(t) {
       if (!lp || lp === null || Math.hypot(nx - lp[0], ny - lp[1]) > 0.35) M.pts.push([+nx.toFixed(2), +ny.toFixed(2)]);
     } else { M.v = 0; if (M.pts.length && M.pts[M.pts.length - 1] !== null) M.pts.push(null); }
   }
+  if (M.cutFrame) { clipSpawn(M.cutFrame, dt); M.cutFrame = 0; }
   if (t > M.saveAt) { M.saveAt = t + 5000; saveProg(); }
   draw();
   requestAnimationFrame(frame);
@@ -641,8 +642,128 @@ function build3() {
   add(crown); add(trunk);
   // Bunkere og andet, man ikke kan køre i: let sænket sand er allerede i kortet – her et lille kantløft, så de ses fra siden
   G.mower = add(mowerModel(M.map.kind, M.mw.w));
+  G.blades = add(bladeMesh());
+  add(clipPoints());
   G.dist = M.map.kind === 0 ? 4.5 : 9;
   G.snap = true;
+}
+
+
+// ---------- Græsstrå tæt på kameraet (som i spillet) ----------
+// Et gitter af små tuer følger kameraet. Hver tue slår op i kortet: langt græs, hvor der ikke er klippet,
+// kort og lagt ned i klipperetningen, hvor der er klippet (det giver striberne), ingen strå i bunkere.
+const BLADE_VS = `
+attribute vec2 io;
+uniform vec2 camXZ, WH; uniform float R, time;
+uniform sampler2D map, cutT, cellT;
+varying vec3 vC; varying float vF;
+float hs(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main() {
+  vec2 wp = camXZ + mod(io - camXZ + R, 2.0 * R) - R;     // fast plads i verden, selv om gitteret følger kameraet
+  float r1 = hs(wp), r2 = hs(wp + 7.13), r3 = hs(wp + 3.71);
+  wp += (vec2(r1, r2) - 0.5) * 0.2;
+  vec2 uv = wp / WH;
+  float hgt = 0.17; vec3 col = vec3(0.235, 0.345, 0.165); vec2 bend = vec2(0.0);
+  if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
+    float cell = floor(texture2D(cellT, uv).r * 255.0 + 0.5);
+    float zone = mod(cell, 8.0), blocked = mod(floor(cell / 16.0), 2.0);
+    col = texture2D(map, vec2(uv.x, 1.0 - uv.y)).rgb;
+    float a = texture2D(cutT, uv).r * 255.0;
+    if (a < 254.5) { float ang = a / 256.0 * 6.2831853; bend = vec2(cos(ang), sin(ang)); hgt = zone > 2.5 ? 0.03 : 0.055; }
+    else hgt = (zone < 0.5 || zone > 5.5) ? 0.17 : (zone > 2.5 ? 0.075 : 0.12);
+    if (blocked > 0.5) hgt = 0.0;
+  }
+  float d = length(wp - camXZ);
+  hgt *= 1.0 - smoothstep(R * 0.55, R * 0.98, d);
+  float t = position.y, th = r3 * 6.2831853;
+  vec2 q = vec2(position.x * cos(th) - position.z * sin(th), position.x * sin(th) + position.z * cos(th));
+  float sway = sin(time * 1.6 + wp.x * 0.6 + wp.y * 0.45) * 0.18;
+  q += (bend * 0.9 + vec2(sway, sway * 0.6)) * t * hgt;
+  vec3 W = vec3(wp.x + q.x, t * hgt * (0.7 + 0.6 * r2), wp.y + q.y);
+  vC = col * (0.8 + 0.5 * t) * (0.9 + 0.22 * r1);
+  vF = smoothstep(120.0, 600.0, length(W - cameraPosition));
+  gl_Position = projectionMatrix * viewMatrix * vec4(W, 1.0);
+}`;
+const BLADE_FS = `
+uniform vec3 fogC; varying vec3 vC; varying float vF;
+void main() { gl_FragColor = vec4(mix(vC, fogC, vF), 1.0); }`;
+
+function bladeMesh() {
+  const G = G3, m = M.map;
+  // Tre krydsende strå pr. tue (tre trekanter)
+  const pos = [];
+  for (let k = 0; k < 5; k++) {
+    // Fem tynde strå, spredt lidt i tuen
+    const a = k * 2.4, c = Math.cos(a) * 0.008, s = Math.sin(a) * 0.008, ox = Math.cos(a * 1.7) * 0.05, oz = Math.sin(a * 1.7) * 0.05;
+    pos.push(ox - c, 0, oz - s, ox + c, 0, oz + s, ox * 1.6, 1, oz * 1.6);
+  }
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  // Tæthed: tættere på telefoner med god skærm, men højst ca. 16.000 tuer
+  const R = 9, sp = 0.13, n = Math.floor(2 * R / sp);
+  const io = new Float32Array(n * n * 2);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { io[(j * n + i) * 2] = -R + i * sp; io[(j * n + i) * 2 + 1] = -R + j * sp; }
+  geo.setAttribute("io", new THREE.InstancedBufferAttribute(io, 2));
+  geo.instanceCount = n * n;
+  if (G.cellT) G.cellT.dispose();
+  G.cellT = new THREE.DataTexture(m.cells, m.W, m.H, THREE.RedFormat, THREE.UnsignedByteType);
+  G.cellT.magFilter = G.cellT.minFilter = THREE.NearestFilter; G.cellT.needsUpdate = true;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { camXZ: { value: new THREE.Vector2() }, WH: { value: new THREE.Vector2(m.W * m.cell, m.H * m.cell) }, R: { value: R }, time: { value: 0 },
+      map: { value: G.tex }, cutT: { value: G.cutT }, cellT: { value: G.cellT }, fogC: { value: new THREE.Color(0xc4d6e2) } },
+    vertexShader: BLADE_VS, fragmentShader: BLADE_FS, side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+// ---------- Afklip: græsset flyver fra klippeenhederne og lægger sig ----------
+const CLIP_N = 2400;
+function clipPoints() {
+  const g = new THREE.BufferGeometry();
+  const P = new Float32Array(CLIP_N * 3).fill(-1000), C = new Float32Array(CLIP_N * 3);
+  g.setAttribute("position", new THREE.BufferAttribute(P, 3));
+  g.setAttribute("color", new THREE.BufferAttribute(C, 3));
+  const pts = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.07, sizeAttenuation: true, vertexColors: true }));
+  pts.frustumCulled = false;
+  G3.clip = { pts, P, C, V: new Float32Array(CLIP_N * 3), life: new Float32Array(CLIP_N), next: 0, acc: 0 };
+  return pts;
+}
+function clipSpawn(nCells, dt) {
+  const K = G3 && G3.clip; if (!K || !use3D()) return;
+  K.acc += nCells * 1.6;                  // et par stykker pr. klippet celle
+  const fx = Math.cos(M.h), fz = Math.sin(M.h), sx = -fz, sz = fx, w = M.mw.w;
+  const front = M.map.kind === 0 ? 0.2 : 1.2, v = Math.max(0.3, Math.abs(M.v));
+  while (K.acc >= 1) {
+    K.acc -= 1;
+    const i = K.next; K.next = (K.next + 1) % CLIP_N;
+    const o = (Math.random() - 0.5) * w;
+    K.P[i * 3] = M.x + fx * front + sx * o; K.P[i * 3 + 1] = 0.12 + Math.random() * 0.1; K.P[i * 3 + 2] = M.y + fz * front + sz * o;
+    // Cylindrene kaster afklippet frem og op (mod kasserne), noget falder ud ved siden af
+    const up = 0.8 + Math.random() * 1.4, fw = v * (0.6 + Math.random() * 0.8);
+    K.V[i * 3] = fx * fw + (Math.random() - 0.5) * 0.9; K.V[i * 3 + 1] = up; K.V[i * 3 + 2] = fz * fw + (Math.random() - 0.5) * 0.9;
+    K.life[i] = 22 + Math.random() * 10;
+    const g = 0.42 + Math.random() * 0.22;
+    K.C[i * 3] = g * 0.55; K.C[i * 3 + 1] = g; K.C[i * 3 + 2] = g * 0.3;
+  }
+}
+function clipStep(dt) {
+  const K = G3 && G3.clip; if (!K) return;
+  for (let i = 0; i < CLIP_N; i++) {
+    if (K.life[i] <= 0) continue;
+    K.life[i] -= dt;
+    const y = K.P[i * 3 + 1];
+    if (y > 0.015) {
+      K.V[i * 3 + 1] -= 9.8 * dt;
+      K.V[i * 3] *= 1 - 1.5 * dt; K.V[i * 3 + 2] *= 1 - 1.5 * dt;
+      K.P[i * 3] += K.V[i * 3] * dt; K.P[i * 3 + 1] = Math.max(0.012, y + K.V[i * 3 + 1] * dt); K.P[i * 3 + 2] += K.V[i * 3 + 2] * dt;
+    }
+    if (K.life[i] <= 0) K.P[i * 3 + 1] = -1000;
+    else if (K.life[i] < 4) { const f = 0.985; K.C[i * 3] *= f; K.C[i * 3 + 1] *= f; K.C[i * 3 + 2] *= f; }
+  }
+  K.pts.geometry.attributes.position.needsUpdate = true;
+  K.pts.geometry.attributes.color.needsUpdate = true;
 }
 
 function draw3() {
@@ -666,6 +787,11 @@ function draw3() {
   G.eye.lerp(eye, a); G.look.lerp(look, a);
   if (G.snap) { G.eye.copy(eye); G.look.copy(look); G.snap = false; }
   c.position.copy(G.eye); c.lookAt(G.look);
+  // Strå-gitteret ligger foran kameraet (der hvor man kigger), ikke under det
+  const u = G.blades.material.uniforms, lx = G.look.x - G.eye.x, lz = G.look.z - G.eye.z, ll = Math.hypot(lx, lz) || 1, ahead = Math.min(ll, 6.5);
+  u.camXZ.value.set(G.eye.x + lx / ll * ahead, G.eye.z + lz / ll * ahead);
+  u.time.value = performance.now() / 1000;
+  clipStep(G.dtLast || 0.016);
   G.sky.position.copy(c.position);
   G.r.render(G.scene, c);
 }
