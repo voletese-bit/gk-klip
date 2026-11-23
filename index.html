@@ -10,48 +10,100 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GK Klip">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#0f1a13;--panel:#16241b;--card:#1c2e22;--line:#2a4332;--text:#eef2ea;--muted:#93a597;
-  --lime:#b5cc8e;--sand:#e2c98a;--ice:#93bedb;--rose:#e0998a;--accent:#b5cc8e;
+  --bg:#0b140e;--panel:#111d15;--card:#16251b;--card2:#1b2e21;--line:#ffffff14;--line2:#ffffff22;--text:#f1f4ec;--muted:#9aac9d;
+  --lime:#bfe08a;--lime2:#8fbf55;--sand:#f0d28c;--ice:#93bedb;--rose:#e0998a;--accent:#bfe08a;
   --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+  --cond:"Barlow Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
-body{display:flex;flex-direction:column}
-header{padding:calc(12px + var(--safe-t)) 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--panel)}
-header h1{font-size:15px;letter-spacing:.14em;margin:0;font-weight:700;text-transform:uppercase}
-header .wallet{font-weight:700;color:var(--sand);font-variant-numeric:tabular-nums}
-main{flex:1;overflow-y:auto;padding:14px 16px calc(90px + var(--safe-b))}
-nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);border-top:1px solid var(--line);padding-bottom:var(--safe-b);z-index:5}
-nav button{flex:1;background:none;border:0;color:var(--muted);padding:10px 0 12px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
-nav button.on{color:var(--lime)}
-nav button svg{display:block;margin:0 auto 3px;width:22px;height:22px}
-h2{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;font-weight:700}
+html,body{margin:0;height:100%;color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+/* baggrunden: en klippet bane i mørke – brede striber, der falder ud i mørket */
+body{display:flex;flex-direction:column;background:
+  radial-gradient(120% 70% at 50% -10%,#2b4a28 0%,#0b140e 62%),
+  repeating-linear-gradient(115deg,#ffffff06 0 46px,#00000000 46px 92px),#0b140e;background-attachment:fixed}
+header{padding:calc(14px + var(--safe-t)) 18px 12px;display:flex;align-items:center;gap:12px;background:linear-gradient(#0b140ef2,#0b140ecc);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4}
+header .mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#cfe9a0,#6f9b40);display:grid;place-items:center;box-shadow:0 4px 14px #8fbf5533}
+header .mark svg{width:24px;height:24px}
+header .ttl{flex:1;min-width:0}
+header h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:700 18px/1 var(--cond);letter-spacing:.03em;margin:0;text-transform:uppercase}
+header .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+header .wallet{white-space:nowrap;flex:none;font:700 17px/1 var(--cond);letter-spacing:.04em;color:#1a1406;background:linear-gradient(135deg,#f6dfa0,#d9b25c);padding:8px 12px;border-radius:999px;font-variant-numeric:tabular-nums;box-shadow:0 3px 12px #d9b25c33}
+main{flex:1;overflow-y:auto;padding:16px 16px calc(100px + var(--safe-b))}
+nav{position:fixed;left:12px;right:12px;bottom:calc(10px + var(--safe-b));display:flex;background:#101b14ee;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line2);border-radius:20px;z-index:5;padding:5px;box-shadow:0 10px 30px #000a}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:8px 0 7px;font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;border-radius:15px}
+nav button.on{color:#132010;background:linear-gradient(135deg,#cfe9a0,#93c05c)}
+nav button svg{display:block;margin:0 auto 2px;width:22px;height:22px}
+h2{font:700 15px/1 var(--cond);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:22px 2px 10px;display:flex;align-items:center;gap:8px}
+h2::after{content:"";flex:1;height:1px;background:var(--line2)}
 h2:first-child{margin-top:4px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.row{display:flex;align-items:center;gap:10px}
+.card{background:linear-gradient(180deg,#1a2b20,#142219);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 6px 20px #0006}
+.row{display:flex;align-items:center;gap:12px}
 .grow{flex:1;min-width:0}
 .t{font-weight:700}
 .s{color:var(--muted);font-size:13px}
-.pay{font-weight:800;color:var(--sand);white-space:nowrap;font-variant-numeric:tabular-nums}
-.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:2px 7px;margin-right:6px}
-.k0{background:#2d4a2a;color:#cfe6a8}.k1{background:#2c3f24;color:var(--lime)}.k2{background:#3a3a22;color:var(--sand)}
-.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;background:var(--lime);color:#0d1410;letter-spacing:.03em}
-.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
-.btn.small{padding:7px 11px;font-size:13px}
-.btn:disabled{opacity:.45}
-.btn.wide{width:100%;padding:13px}
-input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0b140e;color:var(--text);font:inherit}
+.pay{font:800 20px/1 var(--cond);letter-spacing:.03em;color:var(--sand);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:3px 7px;margin-right:6px;vertical-align:2px}
+.k0{background:#36552d;color:#d8f0b0}.k1{background:#2c4a24;color:var(--lime)}.k2{background:#4a4626;color:var(--sand)}
+.new{background:#e0998a;color:#2a0f08}
+.btn{display:inline-block;border:0;border-radius:12px;padding:11px 16px;font:inherit;font-weight:800;background:linear-gradient(135deg,#cfe9a0,#93c05c);color:#10200e;letter-spacing:.03em;box-shadow:0 4px 14px #8fbf5530}
+.btn.ghost{background:#ffffff08;color:var(--text);border:1px solid var(--line2);box-shadow:none}
+.btn.small{padding:8px 12px;font-size:13px}
+.btn:disabled{opacity:.4;box-shadow:none}
+.btn.wide{width:100%;padding:14px}
+input{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line2);background:#0a120d;color:var(--text);font:inherit}
 .empty{color:var(--muted);text-align:center;padding:26px 10px}
-.msg{position:fixed;left:16px;right:16px;bottom:calc(84px + var(--safe-b));background:#26392c;border:1px solid var(--line);border-radius:12px;padding:12px 14px;z-index:20;display:none;font-weight:600}
+.msg{position:fixed;left:16px;right:16px;bottom:calc(92px + var(--safe-b));background:#26392c;border:1px solid var(--line2);border-radius:14px;padding:13px 15px;z-index:20;display:none;font-weight:700;box-shadow:0 10px 30px #000a}
 .big{font-size:30px;font-weight:300;letter-spacing:.02em}
 .stat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.stat div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
-.stat b{display:block;font-size:18px}
-.code{font-size:34px;letter-spacing:.2em;font-weight:800;color:var(--lime);text-align:center;padding:8px 0}
+.stat div{background:#ffffff07;border:1px solid var(--line);border-radius:14px;padding:11px}
+.stat b{display:block;white-space:nowrap;font:700 19px/1.1 var(--cond);letter-spacing:.02em;margin-top:2px}
+.code{font:800 40px/1 var(--cond);letter-spacing:.24em;color:var(--lime);text-align:center;padding:12px 0 6px}
+/* forsiden */
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:18px 18px 16px;margin-bottom:6px;border:1px solid #ffffff1c;
+  background:linear-gradient(160deg,#00000000 30%,#0b140ee6 95%),repeating-linear-gradient(100deg,#7fae4a 0 26px,#6c9a3e 26px 52px);box-shadow:0 14px 40px #000b}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 70% at 85% 0%,#fff3c455,#0000 60%)}
+.hero > *{position:relative}
+.hero .hi{font:700 13px/1 var(--cond);letter-spacing:.18em;text-transform:uppercase;color:#eaf6d4cc}
+.hero .nm{font:800 34px/1.02 var(--cond);letter-spacing:.01em;margin:6px 0 4px;text-shadow:0 2px 10px #0006}
+.hero .line{font-size:14px;color:#eef5e3;max-width:30ch}
+.rank{display:flex;align-items:center;gap:10px;margin-top:14px;background:#0b140e99;border:1px solid #ffffff1a;border-radius:14px;padding:9px 11px;backdrop-filter:blur(6px)}
+.rank .badge{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 15px/1 var(--cond);color:#1a1406;background:linear-gradient(135deg,#f6dfa0,#d9b25c);flex:none}
+.rank .bar{height:6px;border-radius:4px;background:#ffffff1c;overflow:hidden;margin-top:5px}
+.rank .bar i{display:block;height:100%;background:linear-gradient(90deg,#cfe9a0,#93c05c)}
+.crew{display:flex;align-items:center;gap:0;margin-top:2px}
+.crew .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 14px/1 var(--cond);border:2px solid #0b140e;margin-left:-8px;color:#0d1a0c}
+.crew .av:first-child{margin-left:0}
+.crew .more{margin-left:10px;font-size:13px;color:var(--muted)}
+.pulse{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pulse div{background:#ffffff07;border:1px solid var(--line);border-radius:14px;padding:10px 11px}
+.pulse b{display:block;font:700 22px/1 var(--cond);letter-spacing:.02em;margin-bottom:3px}
+.pulse span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.job{display:flex;gap:12px;align-items:stretch}
+.job .th{width:62px;flex:none;border-radius:12px;position:relative;overflow:hidden;border:1px solid #ffffff1a}
+.job .th svg{position:absolute;inset:0;width:100%;height:100%}
+.job .meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+.job .act{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:8px}
+.dots{display:inline-flex;gap:3px;vertical-align:1px;margin-left:4px}
+.dots i{width:6px;height:6px;border-radius:50%;background:#ffffff2a}
+.dots i.on{background:var(--sand)}
+.train{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.train button{border:1px solid #ffffff1a;border-radius:16px;padding:0;overflow:hidden;background:#142219;color:var(--text);font:inherit;text-align:left}
+.train .pic{height:70px;position:relative}
+.train .pic svg{position:absolute;inset:0;width:100%;height:100%}
+.train .lb{min-height:62px;padding:8px 10px 9px;font:700 15px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase}
+.train .lb small{display:block;font:600 11px/1.3 system-ui,sans-serif;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:3px}
+.mach{display:flex;gap:12px;align-items:center}
+.mach .ic{width:56px;height:56px;border-radius:14px;flex:none;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#2d4a2a,#16251b);border:1px solid #ffffff1a}
+.mach .ic svg{width:34px;height:34px}
+.ach{display:flex;flex-wrap:wrap;gap:6px}
+.ach span{font-size:12px;font-weight:700;border-radius:999px;padding:6px 10px;background:#ffffff08;border:1px solid var(--line2);color:var(--muted)}
+.ach span.got{background:#2c4a24;border-color:#8fbf5566;color:#dff2bf}
 /* Klippeskærmen */
 #mow{position:fixed;inset:0;background:#0a120d;z-index:30;display:none;touch-action:none}
 #cv,#cv3{position:absolute;inset:0;width:100%;height:100%}
@@ -60,7 +112,10 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 #hud .bar{flex:1;height:10px;border-radius:6px;background:#ffffff1f;overflow:hidden}
 #hud .bar i{display:block;height:100%;background:var(--lime);width:0}
 #hud .pct{font-weight:800;min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
-#mowbtns{position:absolute;right:12px;bottom:calc(16px + var(--safe-b));display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+#deckBtn{position:absolute;right:16px;bottom:calc(22px + var(--safe-b));width:96px;height:96px;border-radius:50%;border:2px solid #ffffff55;background:#0a120dcc;color:#eef2ea;font:inherit;font-weight:800;font-size:12px;letter-spacing:.06em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 4px 18px #000a;touch-action:none}
+#deckBtn svg{width:34px;height:34px}
+#deckBtn.on{background:radial-gradient(circle at 35% 30%,#d4ea9c,#8fb35a);color:#10200e;border-color:#e6f5c4}
+#mowbtns{position:absolute;right:12px;bottom:calc(132px + var(--safe-b));display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 #mowbtns .btn{box-shadow:0 2px 10px #0008}
 #zoom{display:flex;gap:6px}
 #zoom .btn{width:44px;padding:9px 0;text-align:center}
@@ -73,7 +128,8 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
 </style>
 </head>
 <body>
-<header><h1>Greenkeeper Klip</h1><span class="wallet" id="wallet">–</span></header>
+<header><div class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M3 18 9 4h3L6 18zM9 18l6-14h3l-6 14z" fill="#10200e" opacity=".85"/><circle cx="18.5" cy="17" r="2.2" fill="#fff"/></svg></div>
+  <div class="ttl"><h1>Greenkeeper Klip</h1><div class="sub">Det internationale hold</div></div><span class="wallet" id="wallet">–</span></header>
 <main id="main"></main>
 <nav id="nav">
   <button data-tab="wall" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/></svg>Væggen</button>
@@ -96,6 +152,7 @@ input{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);ba
     <div id="zoom"><button class="btn ghost" id="zOut" style="background:#0a120d99">−</button><button class="btn ghost" id="zIn" style="background:#0a120d99">+</button></div>
     <button class="btn" id="mowDone">Aflever</button>
   </div>
+  <button id="deckBtn" class="deck on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 15h16M6 15v3M18 15v3M9 15V9h6v6"/><path id="deckArrow" d="M12 3v4M9.5 5.5 12 3l2.5 2.5"/></svg><span id="deckTxt">Klipper</span></button>
 </div>
 
 <script type="importmap">{ "imports": { "three": "./lib/three.module.min.js" } }</script>
@@ -146,28 +203,64 @@ let tab = "wall";
 document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { tab = b.dataset.tab; document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b)); render(); });
 function render() { ({ wall: renderWall, garage: renderGarage, me: renderMe })[tab](); }
 
+// ---------- forsiden: morgenmødet, holdet og væggen ----------
+const RANKS = [[0, "Lærling"], [3, "Klipper"], [10, "Greenkeeper"], [25, "Førstemand"], [50, "Head greenkeeper"], [100, "Banemester"]];
+function rankOf(n) { let k = 0; for (let i = 0; i < RANKS.length; i++) if (n >= RANKS[i][0]) k = i; return { k, name: RANKS[k][1], next: RANKS[k + 1] || null, from: RANKS[k][0] }; }
+const AVC = ["#cfe9a0", "#f0d28c", "#93bedb", "#e0b0a0", "#b8d9a8", "#d8c4f0"];
+function initials(n) { return String(n || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(); }
+// Et lille billede af opgaven: striber i opgavens farver (greens lyse og smalle, rough mørke og brede)
+function stripeArt(kind, seed) {
+  const c = [["#9fcf6a", "#7fb04e"], ["#86bd57", "#6a9c40"], ["#5f8a3d", "#4c7532"]][kind] || ["#86bd57", "#6a9c40"];
+  const w = [5, 8, 12][kind] || 8, a = 20 + (seed % 50);
+  let r = ""; for (let x = -60; x < 120; x += w * 2) r += `<rect x="${x}" y="-40" width="${w}" height="160" fill="${c[1]}"/>`;
+  const sand = kind === 2 ? "" : `<ellipse cx="${36 + (seed % 14)}" cy="${48 - (seed % 9)}" rx="9" ry="5" fill="#e8d6a2" stroke="#00000033"/>`;
+  const flag = kind === 0 ? `<line x1="22" y1="40" x2="22" y2="18" stroke="#fff" stroke-width="1.4"/><path d="M22 18h9l-3 3 3 3h-9z" fill="#e05a43"/><circle cx="22" cy="40" r="2.4" fill="#0b140e"/>` : "";
+  return `<svg viewBox="0 0 62 62" preserveAspectRatio="xMidYMid slice"><rect width="62" height="62" fill="${c[0]}"/><g transform="rotate(${a} 31 31)">${r}</g>${sand}${flag}<rect width="62" height="62" fill="url(#vg)"/><defs><radialGradient id="vg" cx="30%" cy="20%" r="90%"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs></svg>`;
+}
+function dots(n) { return `<span class="dots">${[1, 2, 3].map((k) => `<i class="${k <= n ? "on" : ""}"></i>`).join("")}</span>`; }
+function greet() { const h = new Date().getHours(); return h < 5 ? "Godnat" : h < 10 ? "God morgen" : h < 13 ? "God formiddag" : h < 18 ? "God eftermiddag" : "God aften"; }
+
 async function renderWall() {
   main.innerHTML = `<div class="empty">Henter væggen …</div>`;
-  let wall = [];
-  try { [wall] = await Promise.all([api("job_wall").then((j) => j.jobs), loadMe()]); } catch (e) { main.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-  let h = "";
+  let wall = [], top = [];
+  try { [wall, , top] = await Promise.all([api("job_wall").then((j) => j.jobs), loadMe(), api("top").then((j) => j.top || []).catch(() => [])]); } catch (e) { main.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  const open = wall.filter((j) => !j.mine);
+  const clubs = new Set(open.map((j) => j.poster_name)).size;
+  const done = me ? me.jobs_done : 0, rk = rankOf(done);
+  const pct = rk.next ? Math.round((done - rk.from) / (rk.next[0] - rk.from) * 100) : 100;
+  const crew = top.slice(0, 6);
+  let h = `<div class="hero">
+    <div class="hi">${greet()}</div>
+    <div class="nm">${esc(id.name || "Greenkeeper")}</div>
+    <div class="line">${open.length ? `${open.length} ${open.length === 1 ? "bane venter" : "baner venter"} på holdet i dag${clubs > 1 ? ` – fra ${clubs} klubber` : ""}. Tag en, klip den flot, og hold banerne skarpe.` : "Væggen er tom lige nu – holdet har klippet det hele. Varm op på træningsbanen."}</div>
+    <div class="rank"><div class="badge">${rk.k + 1}</div><div class="grow"><div class="t">${rk.name}</div>
+      <div class="s">${rk.next ? `${rk.next[0] - done} opgaver til ${rk.next[1]}` : "Øverst på holdet"}</div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
+  </div>`;
+  h += `<div class="pulse"><div><b>${open.length}</b><span>Opgaver</span></div><div><b>${me ? done : "–"}</b><span>Dine klip</span></div><div><b>${me ? Math.round(me.m2_cut).toLocaleString("da-DK") : "–"}</b><span>m² klippet</span></div></div>`;
+  if (crew.length) {
+    h += `<h2>Holdet</h2><div class="card"><div class="row"><div class="crew">${crew.map((p, k) => `<div class="av" title="${esc(p.name)}" style="background:${AVC[k % AVC.length]}">${esc(initials(p.name))}</div>`).join("")}</div>
+      <div class="grow s" style="margin-left:6px">${esc(crew[0].name)} fører holdet${crew.length > 1 ? ` · ${crew.length} greenkeepere i front` : ""}</div></div></div>`;
+  }
   if (me && me.current) {
     const c = me.current;
-    h += `<h2>Din opgave</h2><div class="card"><div class="row"><div class="grow"><span class="tag k${c.kind}">${KIND[c.kind]}</span><span class="t">${esc(c.title)}</span><div class="s">${esc(c.poster_name)} · ${Math.round(c.area_m2)} m²</div></div><span class="pay">${kr(c.pay)}</span></div>
-      <div class="row" style="margin-top:10px"><button class="btn" data-go="${c.id}">Fortsæt klipningen</button><button class="btn ghost small" data-drop="${c.id}">Opgiv</button></div></div>`;
+    h += `<h2>Din opgave</h2><div class="card"><div class="job"><div class="th">${stripeArt(c.kind, (c.id || "").charCodeAt(0) || 7)}</div><div class="grow"><span class="tag k${c.kind}">${KIND[c.kind]}</span><div class="t">${esc(c.title)}</div><div class="meta">${esc(c.poster_name)} · ${Math.round(c.area_m2).toLocaleString("da-DK")} m²</div></div>
+      <div class="act"><span class="pay">${kr(c.pay)}</span></div></div>
+      <div class="row" style="margin-top:12px"><button class="btn grow" data-go="${c.id}">Fortsæt klipningen</button><button class="btn ghost small" data-drop="${c.id}">Opgiv</button></div></div>`;
   }
   h += `<h2>Den internationale væg</h2>`;
-  const open = wall.filter((j) => !j.mine);
-  if (!open.length) h += `<div class="card empty">Ingen klippeopgaver lige nu. Kig igen om lidt – eller tag en øveopgave fra klubben herunder.</div>`;
+  if (!open.length) h += `<div class="card empty">Ingen klippeopgaver lige nu. Kig igen om lidt – eller tag en tur på træningsbanen herunder.</div>`;
   for (const j of open) {
-    h += `<div class="card"><div class="row"><div class="grow"><span class="tag k${j.kind}">${KIND[j.kind]}</span><span class="t">${esc(j.title)}</span>
-      <div class="s">${esc(j.poster_name)} · ${Math.round(j.area_m2).toLocaleString("da-DK")} m² · ${mowerFor(j.kind).own ? "din egen klipper" : "låneklipper (klubben tager 30 %)"}</div></div>
-      <div style="text-align:right"><div class="pay">${kr(j.pay)}</div><button class="btn small" data-take="${j.id}" style="margin-top:6px" ${me && me.current ? "disabled" : ""}>Tag den</button></div></div></div>`;
+    const diff = j.area_m2 > 8000 ? 3 : j.area_m2 > 1500 ? 2 : 1, isNew = j.created_at && Date.now() - new Date(j.created_at).getTime() < 864e5;
+    h += `<div class="card"><div class="job"><div class="th">${stripeArt(j.kind, (j.id || "").charCodeAt(1) || 11)}</div>
+      <div class="grow">${isNew ? `<span class="tag new">Ny</span>` : ""}<span class="tag k${j.kind}">${KIND[j.kind]}</span><div class="t">${esc(j.title)}</div>
+        <div class="meta">${esc(j.poster_name)} · ${Math.round(j.area_m2).toLocaleString("da-DK")} m² · sværhed${dots(diff)}</div>
+        <div class="meta">${mowerFor(j.kind).own ? "Din egen klipper" : "Klubbens låneklipper – klubben tager 30 %"}</div></div>
+      <div class="act"><span class="pay">${kr(j.pay)}</span><button class="btn small" data-take="${j.id}" ${me && me.current ? "disabled" : ""}>Tag den</button></div></div></div>`;
   }
   const mine = wall.filter((j) => j.mine);
-  if (mine.length) h += `<p class="hint">${mine.length} af opgaverne på væggen er dine egne fra spillet.</p>`;
-  h += `<h2>Klubbens øvebane</h2><div class="card"><div class="s" style="margin-bottom:8px">Lær klipperen at kende. Klubben betaler lidt lommepenge (op til 250 kr, 8 gange om dagen).</div>
-    <div class="row">${[0, 1, 2].map((k) => `<button class="btn ghost small" data-prac="${k}">${KIND[k]}</button>`).join("")}</div></div>`;
+  if (mine.length) h += `<p class="s" style="margin:4px 2px 0">${mine.length} af opgaverne på væggen er dine egne fra spillet.</p>`;
+  h += `<h2>Træningsbanen</h2><div class="train">${[0, 1, 2].map((k) => `<button data-prac="${k}"><div class="pic">${stripeArt(k, 9 + k * 17)}</div><div class="lb">${KIND[k]}<small>${["Smalle striber, præcision", "Lange, lige træk", "Bred klipper, bakker"][k]}</small></div></button>`).join("")}</div>
+    <p class="s" style="margin:8px 2px 0">Klubben betaler lidt lommepenge for træning (op til 250 kr, 8 gange om dagen).</p>`;
   main.innerHTML = h;
   main.querySelectorAll("[data-take]").forEach((b) => b.onclick = () => takeJob(b.dataset.take));
   main.querySelectorAll("[data-go]").forEach((b) => b.onclick = () => takeJob(b.dataset.go));
@@ -180,21 +273,27 @@ function mowerFor(kind) {
   return own ? { own: true, id: own.id, name: own.name, ...OWN[kind] } : { own: false, id: "laan", name: "Klubbens låneklipper", ...LOAN[kind] };
 }
 
+const MICON = [
+  `<svg viewBox="0 0 34 34" fill="none" stroke="#cfe9a0" stroke-width="2"><rect x="9" y="17" width="16" height="7" rx="2"/><path d="M12 17V9h10l3 8"/><circle cx="11" cy="26" r="2.5"/><circle cx="23" cy="26" r="2.5"/></svg>`,
+  `<svg viewBox="0 0 34 34" fill="none" stroke="#cfe9a0" stroke-width="2"><rect x="6" y="16" width="22" height="7" rx="2"/><path d="M10 16V8h12v8M8 8h18"/><circle cx="10" cy="26" r="3"/><circle cx="24" cy="26" r="3"/></svg>`,
+  `<svg viewBox="0 0 34 34" fill="none" stroke="#f0d28c" stroke-width="2"><rect x="4" y="18" width="26" height="6" rx="2"/><path d="M9 18v-8h14v8M7 10h20"/><circle cx="9" cy="27" r="3"/><circle cx="25" cy="27" r="3"/></svg>`];
 async function renderGarage() {
   main.innerHTML = `<div class="empty">Henter garagen …</div>`;
   await loadMe(); if (!me) return;
-  let h = `<h2>Dine klippere</h2>`;
-  h += `<div class="card"><div class="row"><div class="grow"><div class="t">Klubbens låneklipper</div><div class="s">Gratis at låne til alle slags opgaver – men smallere og langsommere, og klubben tager 30 % af betalingen.</div></div></div></div>`;
+  let h = `<div class="hero" style="padding-bottom:18px"><div class="hi">Garagen</div><div class="nm">${me.mowers.length ? `${me.mowers.length} ${me.mowers.length === 1 ? "klipper" : "klippere"}` : "Klubbens låneklipper"}</div>
+    <div class="line">${me.mowers.length ? "Dine egne maskiner – hele betalingen går til dig." : "Du låner klubbens klipper. Tjen penge på væggen, og køb din egen – så går hele betalingen til dig."}</div></div>`;
+  h += `<h2>Dine klippere</h2>`;
+  h += `<div class="card"><div class="mach"><div class="ic">${MICON[1]}</div><div class="grow"><div class="t">Klubbens låneklipper</div><div class="s">Gratis til alle slags opgaver – smallere og langsommere, og klubben tager 30 %.</div></div></div></div>`;
   for (const m of me.mowers) {
-    h += `<div class="card"><div class="row"><div class="grow"><span class="tag k${m.kind}">${KIND[m.kind]}</span><span class="t">${esc(m.name)}</span>
+    h += `<div class="card"><div class="mach"><div class="ic">${MICON[m.kind]}</div><div class="grow"><span class="tag k${m.kind}">${KIND[m.kind]}</span><div class="t">${esc(m.name)}</div>
       <div class="s">${m.source === "gave" ? "Gave fra " + esc(m.given_by) + " for godt arbejde" : "Købt for dine egne penge"} · ${OWN[m.kind].w} m klippebredde</div></div></div></div>`;
   }
-  h += `<h2>Køb en klipper</h2>`;
+  h += `<h2>Forhandleren</h2>`;
   for (const s of me.shop) {
     const has = me.mowers.some((m) => m.model === s.model);
-    h += `<div class="card"><div class="row"><div class="grow"><span class="tag k${s.kind}">${KIND[s.kind]}</span><span class="t">${esc(s.name)}</span>
+    h += `<div class="card"><div class="mach"><div class="ic">${MICON[s.kind]}</div><div class="grow"><span class="tag k${s.kind}">${KIND[s.kind]}</span><div class="t">${esc(s.name)}</div>
       <div class="s">${OWN[s.kind].w} m bredde · ${OWN[s.kind].v} m/s · hele betalingen til dig</div></div>
-      <div style="text-align:right"><div class="pay">${kr(s.price)}</div><button class="btn small" data-buy="${s.model}" style="margin-top:6px" ${has || me.wallet < s.price ? "disabled" : ""}>${has ? "Har den" : "Køb"}</button></div></div></div>`;
+      <div class="act" style="display:flex;flex-direction:column;align-items:flex-end;gap:8px"><span class="pay">${kr(s.price)}</span><button class="btn small" data-buy="${s.model}" ${has || me.wallet < s.price ? "disabled" : ""}>${has ? "Har den" : "Køb"}</button></div></div></div>`;
   }
   main.innerHTML = h;
   main.querySelectorAll("[data-buy]").forEach((b) => b.onclick = async () => {
@@ -207,16 +306,20 @@ async function renderGarage() {
 async function renderMe() {
   main.innerHTML = `<div class="empty">Henter …</div>`;
   await loadMe(); if (!me) return;
-  main.innerHTML = `<h2>Mig</h2>
-    <div class="card"><div class="s">Dit navn på væggen</div><div class="row" style="margin-top:6px"><input id="nm" value="${esc(me.name)}" maxlength="32"><button class="btn small" id="nmSave">Gem</button></div></div>
-    <div class="stat"><div><span class="s">Konto</span><b>${kr(me.wallet)}</b></div><div><span class="s">Opgaver</span><b>${me.jobs_done}</b></div><div><span class="s">Klippet</span><b>${Math.round(me.m2_cut).toLocaleString("da-DK")} m²</b></div></div>
+  const rk = rankOf(me.jobs_done), m2 = Math.round(me.m2_cut);
+  const ach = [[me.jobs_done >= 1, "Første opgave"], [me.jobs_done >= 10, "10 opgaver"], [m2 >= 1000, "1.000 m²"], [m2 >= 10000, "1 hektar"], [me.mowers.length > 0, "Egen klipper"], [me.mowers.some((m) => m.source === "gave"), "Fik en gave"], [me.linked, "Koblet til spillet"]];
+  main.innerHTML = `<div class="hero"><div class="hi">${rk.name}</div><div class="nm">${esc(me.name)}</div><div class="line">Medlem af det internationale hold af greenkeepere, der klipper hinandens baner.</div></div>
+    <div class="stat" style="margin-top:10px"><div><span class="s">Konto</span><b>${kr(me.wallet)}</b></div><div><span class="s">Opgaver</span><b>${me.jobs_done}</b></div><div><span class="s">Klippet</span><b>${m2.toLocaleString("da-DK")} m²</b></div></div>
+    <h2>Mærker</h2><div class="ach">${ach.map(([g, t]) => `<span class="${g ? "got" : ""}">${g ? "✓ " : ""}${t}</span>`).join("")}</div>
+    <h2>Dit navn på væggen</h2>
+    <div class="card"><div class="row"><input id="nm" value="${esc(me.name)}" maxlength="32"><button class="btn small" id="nmSave">Gem</button></div></div>
     <h2>Kobl til spillet</h2>
     <div class="card">${me.linked ? `<div class="t">Appen er koblet på din spil-bruger</div><div class="s">Dine klippere og penge ligger på din bruger og følger med i spillet.</div>`
       : `<div class="s">Har du (eller køber du) Greenkeeper's Playground, kan appen og spillet blive samme bruger – så følger dine klippere og penge med. Lav en kode her, og skriv den i spillet: telefonen (F12) · Opgaver · Kobl appen på.</div>
-      <div id="codeBox"></div><button class="btn wide" id="mkCode" style="margin-top:10px">Lav en kode</button>`}</div>
+      <div id="codeBox"></div><button class="btn wide" id="mkCode" style="margin-top:12px">Lav en kode</button>`}</div>
     <h2>Læg appen på hjemmeskærmen</h2>
     <div class="card s">iPhone: tryk på Del-knappen i Safari og vælg <b>Føj til hjemmeskærm</b>.<br>Android: tryk på ⋮ i Chrome og vælg <b>Installer app</b> / <b>Føj til startskærm</b>.</div>
-    <p class="hint">Din bruger ligger på denne telefon. Kobl den til spillet, så du ikke mister den, hvis du sletter appen.</p>`;
+    <p class="s" style="margin:6px 2px 0">Din bruger ligger på denne telefon. Kobl den til spillet, så du ikke mister den, hvis du sletter appen.</p>`;
   document.getElementById("nmSave").onclick = async () => { try { const r = await api("rename", { name: document.getElementById("nm").value }); id.name = r.name; store.set("id", id); say("Navnet er gemt"); } catch (e) { say(e.message); } };
   const mk = document.getElementById("mkCode");
   if (mk) mk.onclick = async () => { try { const r = await api("link_code"); document.getElementById("codeBox").innerHTML = `<div class="code">${esc(r.code)}</div><div class="s" style="text-align:center">Gælder i 30 minutter</div>`; } catch (e) { say(e.message); } };
@@ -353,6 +456,7 @@ function startMowing(map, job, practice) {
   document.getElementById("mowinfo").textContent = `${job.title} · ${mw.name} (${mw.w} m) · ${practice ? "øvebane" : kr(job.pay) + (mw.own ? "" : " – klubben tager 30 %")}`;
   mowEl.style.display = "block";
   document.getElementById("lineq").textContent = "";
+  setDeck(true);
   if (init3()) { build3(); buildTop(); clipInitTop(); }
   applyCam();
   resize(); last = performance.now(); requestAnimationFrame(frame);
@@ -440,6 +544,21 @@ document.getElementById("camBtn").onclick = () => { camMode = (camMode + 1) % 3;
 document.getElementById("hBtn").onclick = () => { const c = (store.get("contour", 1) + 1) % 3; store.set("contour", c); if (TOP.uni) TOP.uni.contour.value = c * 0.6; document.getElementById("hBtn").textContent = ["Højder: fra", "Højder: lidt", "Højder: tydeligt"][c]; };
 document.getElementById("mowBack").onclick = () => { if (!M) return; saveProg(); M = null; mowEl.style.display = "none"; render(); };
 document.getElementById("mowDone").onclick = submit;
+// Hæv og sænk klippeenhederne (højre tommelfinger) – mellemrum på tastaturet
+function setDeck(on) {
+  if (!M) return;
+  M.deck = on;
+  const b = document.getElementById("deckBtn");
+  b.classList.toggle("on", on);
+  document.getElementById("deckTxt").textContent = on ? "Klipper" : "Hævet";
+  document.getElementById("deckArrow").setAttribute("d", on ? "M12 3v4M9.5 5.5 12 8l2.5-2.5" : "M12 8V3M9.5 5.5 12 3l2.5 2.5");
+  // løftet efter et træk: hjælpelinjen kommer, når du er drejet (så vi ved hvilken side)
+  if (!on) { M.pendRun = M.run; M.run = null; if (M.pts.length && M.pts[M.pts.length - 1] !== null) M.pts.push(null); }
+  else M.pendRun = null;
+  if (navigator.vibrate) navigator.vibrate(18);
+}
+document.getElementById("deckBtn").addEventListener("pointerdown", (e) => { e.preventDefault(); setDeck(!(M && M.deck)); });
+addEventListener("keydown", (e) => { if (e.key === " " && M) { e.preventDefault(); setDeck(!M.deck); } });
 
 function resize() {
   const d = window.devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d;
@@ -471,28 +590,32 @@ function frame(t) {
     const kt = (keys["arrowright"] || keys["d"] ? 1 : 0) - (keys["arrowleft"] || keys["a"] ? 1 : 0);
     if (kf || kt) { fw = kf; tr = kt; }
     if (Math.abs(fw) < 0.12) fw = 0; if (Math.abs(tr) < 0.1) tr = 0;
-    M.h += tr * 1.5 * dt * (fw < 0 ? -1 : 1);
+    M.h += tr * 0.95 * dt * (fw < 0 ? -1 : 1);
     want = fw > 0 ? M.mw.v * fw : M.mw.v * 0.45 * fw;
   } else if (mag > 0.12) {
     const target = Math.atan2(jy, jx);
     let d = target - M.h; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
-    const turn = 2.6 * dt;   // rad/s
+    const turn = 1.45 * dt;   // rad/s – roligere, som i spillet (Dennis 22.11.2026)
     M.h += Math.max(-turn, Math.min(turn, d));
     want = M.mw.v * mag * Math.max(0.25, Math.cos(d));   // sænk farten i skarpe sving
   }
   // Op ad bakke går det langsommere, ned ad lidt hurtigere
   { const tr = terrainAt(M.x, M.y), gr = tr.gx * Math.cos(M.h) + tr.gy * Math.sin(M.h); want *= Math.max(0.55, Math.min(1.2, 1 - gr * 2.2 * Math.sign(want || 1))); }
+  if (!M.deck && M.pendRun) { let d = M.h - M.pendRun.h; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; if (Math.abs(d) > 0.9) { M.run = M.pendRun; M.pendRun = null; endRun(d); } }
+  if (!M.deck) want *= 1.3;                      // med klippeenhederne oppe kører den lidt hurtigere
   M.v += (want - M.v) * Math.min(1, dt * 3);
   if (Math.abs(M.v) > 0.02) {
     const nx = M.x + Math.cos(M.h) * M.v * dt, ny = M.y + Math.sin(M.h) * M.v * dt;
     if (!blocked(nx, ny)) {
-      const cut0 = M.cutN;
-      stamp(M.x, M.y, nx, ny);
-      runTrack(M.x, M.y, nx, ny, M.v > 0.05 && M.cutN >= cut0);
-      maskSeg(M.x, M.y, nx, ny);
+      if (M.deck) {
+        const cut0 = M.cutN;
+        stamp(M.x, M.y, nx, ny);
+        runTrack(M.x, M.y, nx, ny, M.v > 0.05 && M.cutN >= cut0);
+        maskSeg(M.x, M.y, nx, ny);
+      }
       M.x = nx; M.y = ny;
       const lp = M.pts.length ? M.pts[M.pts.length - 1] : null;
-      if (!lp || lp === null || Math.hypot(nx - lp[0], ny - lp[1]) > 0.35) M.pts.push([+nx.toFixed(2), +ny.toFixed(2)]);
+      if (M.deck && (!lp || lp === null || Math.hypot(nx - lp[0], ny - lp[1]) > 0.35)) M.pts.push([+nx.toFixed(2), +ny.toFixed(2)]);
     } else { M.v = 0; if (M.pts.length && M.pts[M.pts.length - 1] !== null) M.pts.push(null); }
   }
   if (M.cutFrame) { if (useTop()) clipSpawnTop(M.cutFrame); else clipSpawn(M.cutFrame, dt); M.cutFrame = 0; }
@@ -947,7 +1070,7 @@ async function submit() {
 // ---------- start ----------
 (async function boot() {
   if (!id.name) {
-    main.innerHTML = `<h2>Velkommen</h2><div class="card"><div class="t" style="margin-bottom:6px">Klip baner for golfklubber verden over</div>
+    main.innerHTML = `<div class="hero"><div class="hi">Velkommen på holdet</div><div class="nm">Klip baner verden over</div><div class="line">Golfklubber lægger deres baner på væggen. Du klipper dem på telefonen – og bliver en del af et internationalt hold af greenkeepere.</div></div><div class="card"><div class="t" style="margin-bottom:6px">Sådan virker det</div>
       <div class="s">Tag klippeopgaver fra den internationale væg, klip dem her på telefonen og tjen penge. Klubben låner dig en klipper til at starte med – senere kan du købe dine egne (eller få en i gave, hvis du gør det godt). Det er gratis.</div></div>
       <h2>Hvad skal du hedde?</h2><input id="nm0" maxlength="32" placeholder="Dit navn på væggen"><button class="btn wide" id="go0" style="margin-top:10px">Kom i gang</button>`;
     document.getElementById("go0").onclick = async () => {

@@ -268,24 +268,71 @@ void main() {
   gl_FragColor = vec4(pow(clamp(col, 0.0, 1.0), vec3(1.0)), 1.0);
 }`;
 
-// Trækroner set oppefra (lys oppe til venstre) og deres skygger
-function canopyTex(seed, hue) {
-  const S = 128, cv = document.createElement("canvas"); cv.width = cv.height = S;
+// Trækroner set oppefra (lyset oppe fra venstre) – tre slags med hver sin karakter:
+// løvtræ (eg/bøg: tunge, klumpede kroner), nåletræ (gran: en stjerne af grene om toppen) og birk (let og luftig).
+// Hver krone får sin egen skygge med samme form.
+function canopyTex(kind, seed) {
+  const S = 256, cv = document.createElement("canvas"); cv.width = cv.height = S;
   const g = cv.getContext("2d"), R = (k) => { const s = Math.sin(seed * 91.7 + k * 12.9) * 43758.5; return s - Math.floor(s); };
-  const blobs = 9 + Math.floor(R(1) * 6);
-  for (let pass = 0; pass < 3; pass++) for (let b = 0; b < blobs; b++) {
-    const a = R(b + 3) * 6.283, r = R(b + 7) * S * 0.24, x = S / 2 + Math.cos(a) * r, y = S / 2 + Math.sin(a) * r, rr = S * (0.16 + R(b + 11) * 0.12) * (1 - pass * 0.25);
-    const ox = -rr * 0.25 * pass, oy = -rr * 0.3 * pass;
-    const gr = g.createRadialGradient(x + ox - rr * 0.3, y + oy - rr * 0.35, rr * 0.1, x + ox, y + oy, rr);
-    const L = [0.16, 0.24, 0.33][pass] + R(b + 13) * 0.05;
-    gr.addColorStop(0, `hsl(${hue}, 42%, ${(L + 0.1) * 100}%)`); gr.addColorStop(0.7, `hsl(${hue}, 45%, ${L * 100}%)`); gr.addColorStop(1, `hsla(${hue}, 45%, ${(L - 0.06) * 100}%, 0)`);
-    g.fillStyle = gr; g.beginPath(); g.arc(x + ox, y + oy, rr, 0, 6.283); g.fill();
+  const L = (-0.62), Ly = (-0.78);   // solen
+  const blob = (x, y, r, hue, sat, lum, alpha = 1) => {
+    const gr = g.createRadialGradient(x + L * r * 0.45, y + Ly * r * 0.45, r * 0.05, x, y, r);
+    gr.addColorStop(0, `hsla(${hue},${sat}%,${lum + 9}%,${alpha})`);
+    gr.addColorStop(0.55, `hsla(${hue},${sat}%,${lum}%,${alpha})`);
+    gr.addColorStop(0.9, `hsla(${hue},${sat + 2}%,${lum - 4}%,${alpha * 0.9})`);
+    gr.addColorStop(1, `hsla(${hue},${sat}%,${lum - 6}%,0)`);
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
+  };
+  const C = S / 2;
+  if (kind === 1) {
+    // gran: mørk kerne og grene som spidse stråler, lysest mod solen
+    const hue = 140 + R(1) * 14, n = 26 + Math.floor(R(2) * 10);
+    blob(C, C, S * 0.3, hue, 30, 14);
+    for (let k = 0; k < n; k++) {
+      const a = k / n * 6.283 + R(k + 3) * 0.3, len = S * (0.34 + R(k + 5) * 0.12), lit = Math.cos(a) * L + Math.sin(a) * Ly;
+      g.strokeStyle = `hsl(${hue},${32 + lit * 6}%,${17 + lit * 9 + R(k) * 4}%)`; g.lineWidth = S * 0.05; g.lineCap = "round";
+      g.beginPath(); g.moveTo(C, C); g.lineTo(C + Math.cos(a) * len, C + Math.sin(a) * len); g.stroke();
+      for (let t = 0.35; t < 1; t += 0.16) {   // sidegrene
+        const px = C + Math.cos(a) * len * t, py = C + Math.sin(a) * len * t, sl = len * 0.22 * (1 - t);
+        g.lineWidth = S * 0.018;
+        for (const sd of [-1, 1]) { const b = a + sd * 0.9; g.beginPath(); g.moveTo(px, py); g.lineTo(px + Math.cos(b) * sl, py + Math.sin(b) * sl); g.stroke(); }
+      }
+    }
+    blob(C + L * 6, C + Ly * 6, S * 0.07, hue, 25, 30);   // toppen
+  } else if (kind === 2) {
+    // birk: lys gulgrøn, luftig – mange små klatter med huller imellem
+    const hue = 78 + R(1) * 14;
+    for (let k = 0; k < 70; k++) {
+      const a = R(k + 2) * 6.283, r = Math.sqrt(R(k + 9)) * S * 0.36;
+      blob(C + Math.cos(a) * r, C + Math.sin(a) * r, S * (0.05 + R(k + 4) * 0.05), hue, 38, 36 + R(k) * 8, 0.92);
+    }
+    g.strokeStyle = "rgba(235,230,215,0.28)"; g.lineWidth = 2;
+    for (let k = 0; k < 5; k++) { const a = R(k + 30) * 6.283; g.beginPath(); g.moveTo(C, C); g.lineTo(C + Math.cos(a) * S * 0.25, C + Math.sin(a) * S * 0.25); g.stroke(); }
+  } else {
+    // løvtræ: tunge klumper i tre lag – mørke huller nederst, lyse toppe mod solen
+    const hue = 92 + R(1) * 30, sat = 34 + R(2) * 12;
+    const lumps = 7 + Math.floor(R(3) * 5);
+    for (let k = 0; k < lumps; k++) {
+      const a = k / lumps * 6.283 + R(k + 4), r = S * (0.18 + R(k + 6) * 0.12);
+      blob(C + Math.cos(a) * r, C + Math.sin(a) * r, S * (0.17 + R(k + 8) * 0.06), hue, sat, 20);
+    }
+    blob(C, C, S * 0.26, hue, sat, 22);
+    for (let k = 0; k < 40; k++) {   // lysere bladklynger ovenpå
+      const a = R(k + 20) * 6.283, r = Math.sqrt(R(k + 40)) * S * 0.33;
+      blob(C + Math.cos(a) * r + L * 6, C + Math.sin(a) * r + Ly * 6, S * (0.04 + R(k + 60) * 0.05), hue + 4, sat, 28 + R(k) * 8);
+    }
   }
-  // løvet: små prikker
+  // løv: fin prik-struktur
   const id = g.getImageData(0, 0, S, S), d = id.data;
-  for (let i = 0; i < S * S; i++) { const k = 0.82 + 0.36 * R(i * 0.37 + 5); d[i * 4] *= k; d[i * 4 + 1] *= k; d[i * 4 + 2] *= k; }
+  for (let k = 0; k < S * S; k++) { const f = 0.84 + 0.32 * R(k * 0.37 + 5); d[k * 4] *= f; d[k * 4 + 1] *= f; d[k * 4 + 2] *= f; }
   g.putImageData(id, 0, 0);
-  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  // skyggen: kronens form, sløret og mørk
+  const sc = document.createElement("canvas"); sc.width = sc.height = 128;
+  const sg = sc.getContext("2d"); sg.filter = "blur(5px)"; sg.drawImage(cv, 8, 8, 112, 112);
+  sg.filter = "none"; sg.globalCompositeOperation = "source-in"; sg.fillStyle = "rgba(8,18,6,0.62)"; sg.fillRect(0, 0, 128, 128);
+  const sh = new THREE.CanvasTexture(sc);
+  return { tex, sh, kind };
 }
 function shadowTex() {
   const S = 64, cv = document.createElement("canvas"); cv.width = cv.height = S;
@@ -306,7 +353,7 @@ function buildTop() {
     TOP.scene.add(new THREE.HemisphereLight(0xf4f8ff, 0x6a7a50, 1.5));
     const sun = new THREE.DirectionalLight(0xfff2dc, 1.6); sun.position.set(SUN3[0] * 100, 120, SUN3[1] * 100); TOP.scene.add(sun);
     TOP.shTex = shadowTex();
-    TOP.canopy = [canopyTex(1, 105), canopyTex(2, 95), canopyTex(3, 120), canopyTex(4, 88), canopyTex(5, 140)];
+    TOP.canopy = [canopyTex(0, 1), canopyTex(0, 2), canopyTex(0, 3), canopyTex(1, 4), canopyTex(1, 5), canopyTex(2, 6), canopyTex(0, 7)];
     TOP.objs = [];
   }
   for (const o of TOP.objs) TOP.scene.remove(o);
@@ -360,7 +407,7 @@ function buildTop() {
     contour: { value: store.get("contour", 1) * 0.6 }, roughMM: { value: roughMed }, guide: { value: new THREE.Vector4() }, guideOn: { value: 0 }, ppm: { value: 20 }, time: { value: 0 }, gs: { value: gs }, gm: { value: gm },
   };
   const mat = new THREE.ShaderMaterial({ uniforms: TOP.uni, vertexShader: TOP_VS, fragmentShader: TOP_FS, extensions: { derivatives: true } });
-  const pad = 80;
+  const pad = 220;                                          // jorden fortsætter langt ud, så der aldrig ses en flad kant
   const ground = add(new THREE.Mesh(new THREE.PlaneGeometry(Wm + pad * 2, Hm + pad * 2), mat));
   ground.rotation.x = -Math.PI / 2; ground.position.set(Wm / 2, 0, Hm / 2);
   // Træer: rundt om banen og i den høje rough langt fra det, der klippes
@@ -374,20 +421,27 @@ function buildTop() {
     }
     return true;
   };
-  for (let k = 0; k < 900 && trees.length < 260; k++) {
-    const x = -pad + Math.random() * (Wm + pad * 2), y = -pad + Math.random() * (Hm + pad * 2);
-    if (n1(x / 40, y / 40) < 0.45) continue;                                 // træerne står i grupper
+  const tp = 120;
+  for (let k = 0; k < 4000 && trees.length < 520; k++) {
+    const x = -tp + Math.random() * (Wm + tp * 2), y = -tp + Math.random() * (Hm + tp * 2);
     const inside = x > 0 && y > 0 && x < Wm && y < Hm;
-    const r = 2.6 + Math.random() * 3.6;
+    const dOut = Math.max(-x, x - Wm, -y, y - Hm, 0);
+    // træerne står i grupper – og tættere og tættere ude i skoven omkring banen
+    if (n1(x / 40, y / 40) < 0.5 - Math.min(0.35, dOut / 120)) continue;
+    const r = 2.4 + Math.random() * 3.8;
     if (inside ? !farFromPlay(x, y, r + 6) : (x > -6 && y > -6 && x < Wm + 6 && y < Hm + 6)) continue;
     trees.push([x, y, r]);
   }
   const tg = new THREE.PlaneGeometry(1, 1); tg.rotateX(-Math.PI / 2);
+  // samme materiale deles af alle træer af en slags (billigere at tegne)
+  if (!TOP.cmat) TOP.cmat = TOP.canopy.map((c) => [new THREE.MeshBasicMaterial({ map: c.sh, transparent: true, depthWrite: false }), new THREE.MeshBasicMaterial({ map: c.tex, transparent: true, depthWrite: false })]);
+  trees.sort((a, b) => a[2] - b[2]);
   for (const [x, y, r] of trees) {
-    const sh = add(new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: TOP.shTex, transparent: true, depthWrite: false })));
-    sh.position.set(x - SUN2[0] * r * 0.9, 0.05, y - SUN2[1] * r * 0.9); sh.scale.set(r * 2.5, 1, r * 2.2); sh.renderOrder = 2;
-    const cn = add(new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: TOP.canopy[Math.floor(Math.random() * TOP.canopy.length)], transparent: true, depthWrite: false })));
-    cn.position.set(x, 8 + r, y); cn.scale.set(r * 2.2, 1, r * 2.2); cn.rotation.y = Math.random() * 6.28; cn.renderOrder = 5;
+    const v = Math.floor(Math.random() * TOP.canopy.length), conif = TOP.canopy[v].kind === 1, rr = conif ? r * 0.8 : r;
+    const sh = add(new THREE.Mesh(tg, TOP.cmat[v][0]));
+    sh.position.set(x - SUN2[0] * rr * 1.1, 0.05, y - SUN2[1] * rr * 1.1); sh.scale.set(rr * 2.5, 1, rr * 2.5); sh.renderOrder = 2;
+    const cn = add(new THREE.Mesh(tg, TOP.cmat[v][1]));
+    cn.position.set(x, 8 + rr, y); cn.scale.set(rr * 2.3, 1, rr * 2.3); cn.renderOrder = 5;
   }
   // Maskinens skygge (blød, forskudt væk fra solen)
   TOP.msh = add(new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: TOP.shTex, transparent: true, depthWrite: false, opacity: 0.85 })));
